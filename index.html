@@ -267,6 +267,83 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-进程调度算法"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2021/08/28/%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95/">进程调度算法</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2021/08/28/%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95/" class="article-date">
+	  <time datetime="2021-08-28T12:51:00.000Z" itemprop="datePublished">2021-08-28</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          进程调方式
+非抢占式
+
+进程分配到处理机时，就会一直执行下去，不会被其他进程抢占，直到该进程完成或被阻塞。
+
+
+抢占式
+
+允许调度程序根据某种原则，去暂停某个正在执行的进程，将以分配的处理机重新分配给另一进程。这样可以防止一个长进程长时间地占用处理机。
+
+ 主要原则： 
+
+优先权原则，优先级高的进程可以占用当前进程；
+短进程优先原则，短进程可以抢占当前长进程的处理机；
+时间片原则，当前进程的时间片用完，执行其他进程。 
+
+
+
+
+
+
+轮转调度算法(RR)
+原理
+
+
+在轮转(RR)法中，系统根...
+        </p>
+        <p class="article-more-link">
+          <a href="/2021/08/28/%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95/#more">Read More</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-合并两个有序数组"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -692,6 +769,60 @@ Lambda表达式是JDK8的一个新特性，可以代替匿名内部类写出优�
         </p>
         <p class="article-more-link">
           <a href="/2021/04/04/Lambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%EF%BC%88%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8Lambda%E8%BF%9B%E8%A1%8C%E6%8E%92%E5%BA%8F%EF%BC%89/#more">Read More</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
+    <article id="post-Redis-字典（hash表的底层实现）"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2021/01/10/Redis-%E5%AD%97%E5%85%B8%EF%BC%88hash%E8%A1%A8%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%EF%BC%89/">Redis-字典（hash表的底层实现）</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2021/01/10/Redis-%E5%AD%97%E5%85%B8%EF%BC%88hash%E8%A1%A8%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%EF%BC%89/" class="article-date">
+	  <time datetime="2021-01-10T12:52:00.000Z" itemprop="datePublished">2021-01-10</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/redis/">redis</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          字典，又称为符号表、关联数组或映射，是一种保存键值对的抽象数据结构。字典中每个键都是独一无二的，可以根据键对键值对进行操作。Redis所使用的C语言并没有内置字典，因此Redis构建了自己的字典实现。Redis的数据库就是使用字典来作为底层实现的，对数据库的增删改查也是构建在对字典的操作之上的。
+例如，SET msg “hello world”，这个键值对就是保存在代表数据库字典里面的。
+除了用来表示数据库之外，字典还是哈希键的底层实现之一，当一个哈希键包含的键值对比较多，又或键值对中的元...
+        </p>
+        <p class="article-more-link">
+          <a href="/2021/01/10/Redis-%E5%AD%97%E5%85%B8%EF%BC%88hash%E8%A1%A8%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%EF%BC%89/#more">Read More</a>
         </p>
       
     </div>
