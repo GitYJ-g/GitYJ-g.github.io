@@ -3,25 +3,23 @@
 <head>
   <meta charset="utf-8">
   
-  <title>进程调度算法 | Huffman</title>
+  <title>一次编辑 | Huffman</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
   
   
   
-  <meta name="description" content="进程调方式 非抢占式  进程分配到处理机时，就会一直执行下去，不会被其他进程抢占，直到该进程完成或被阻塞。   抢占式  允许调度程序根据某种原则，去暂停某个正在执行的进程，将以分配的处理机重新分配给另一进程。这样可以防止一个长进程长时间地占用处理机。   主要原则：   优先权原则，优先级高的进程可以占用当前进程； 短进程优先原则，短进程可以抢占当前长进程的处理机； 时间片原则，当前进程的时间片">
+  <meta name="description" content="字符串有三种编辑操作:插入一个字符、删除一个字符或者替换一个字符。 给定两个字符串，编写一个函数判定它们是否只需要一次(或者零次)编辑。 1234567891011121314示例 1:输入: first &#x3D; &quot;pale&quot;second &#x3D; &quot;ple&quot;输出: True 示例 2:输入: first &#x3D; &quot;pales&quot;second &#x3D; &amp;qu">
 <meta property="og:type" content="article">
-<meta property="og:title" content="进程调度算法">
-<meta property="og:url" content="http://seeyj.top/2021/08/28/%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95/index.html">
+<meta property="og:title" content="一次编辑">
+<meta property="og:url" content="http://seeyj.top/2021/08/29/%E4%B8%80%E6%AC%A1%E7%BC%96%E8%BE%91/index.html">
 <meta property="og:site_name" content="Huffman">
-<meta property="og:description" content="进程调方式 非抢占式  进程分配到处理机时，就会一直执行下去，不会被其他进程抢占，直到该进程完成或被阻塞。   抢占式  允许调度程序根据某种原则，去暂停某个正在执行的进程，将以分配的处理机重新分配给另一进程。这样可以防止一个长进程长时间地占用处理机。   主要原则：   优先权原则，优先级高的进程可以占用当前进程； 短进程优先原则，短进程可以抢占当前长进程的处理机； 时间片原则，当前进程的时间片">
+<meta property="og:description" content="字符串有三种编辑操作:插入一个字符、删除一个字符或者替换一个字符。 给定两个字符串，编写一个函数判定它们是否只需要一次(或者零次)编辑。 1234567891011121314示例 1:输入: first &#x3D; &quot;pale&quot;second &#x3D; &quot;ple&quot;输出: True 示例 2:输入: first &#x3D; &quot;pales&quot;second &#x3D; &amp;qu">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="http://seeyj.top/images/%E5%A4%9A%E7%BA%A7%E5%8F%8D%E9%A6%88%E9%98%9F%E5%88%97%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95.png">
-<meta property="article:published_time" content="2021-08-28T12:51:00.000Z">
-<meta property="article:modified_time" content="2021-08-28T14:17:39.971Z">
+<meta property="article:published_time" content="2021-08-29T13:20:00.000Z">
+<meta property="article:modified_time" content="2021-08-29T13:25:36.832Z">
 <meta property="article:author" content="yangjing">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="http://seeyj.top/images/%E5%A4%9A%E7%BA%A7%E5%8F%8D%E9%A6%88%E9%98%9F%E5%88%97%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95.png">
   
     <link rel="alternate" href="/atom.xml" title="Huffman" type="application/atom+xml">
   
@@ -173,7 +171,7 @@
             
       <div id="content" class="outer">
         
-          <section id="main" style="float:none;"><article id="post-进程调度算法" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+          <section id="main" style="float:none;"><article id="post-一次编辑" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
     
@@ -181,7 +179,7 @@
         
   
     <h1 class="thumb" class="article-title" itemprop="name">
-      进程调度算法
+      一次编辑
     </h1>
   
 
@@ -189,12 +187,12 @@
     
     <div class="article-meta">
       
-	<a href="/2021/08/28/%E8%BF%9B%E7%A8%8B%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95/" class="article-date">
-	  <time datetime="2021-08-28T12:51:00.000Z" itemprop="datePublished">2021-08-28</time>
+	<a href="/2021/08/29/%E4%B8%80%E6%AC%A1%E7%BC%96%E8%BE%91/" class="article-date">
+	  <time datetime="2021-08-29T13:20:00.000Z" itemprop="datePublished">2021-08-29</time>
 	</a>
 
       
-    <a class="article-category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
+    <a class="article-category-link" href="/categories/%E7%AE%97%E6%B3%95/">算法</a>
 
       
 	<a class="article-views">
@@ -208,68 +206,12 @@
     </div>
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="进程调方式"><a href="#进程调方式" class="headerlink" title="进程调方式"></a>进程调方式</h1><ul>
-<li><p>非抢占式</p>
-<ul>
-<li>进程分配到处理机时，就会一直执行下去，不会被其他进程抢占，直到该进程完成或被阻塞。</li>
-</ul>
-</li>
-<li><p>抢占式</p>
-<ul>
-<li><p>允许调度程序根据某种原则，去暂停某个正在执行的进程，将以分配的处理机重新分配给另一进程。这样可以防止一个长进程长时间地占用处理机。</p>
-<blockquote>
-<p> 主要原则： </p>
-<ol>
-<li>优先权原则，优先级高的进程可以占用当前进程；</li>
-<li>短进程优先原则，短进程可以抢占当前长进程的处理机；</li>
-<li>时间片原则，当前进程的时间片用完，执行其他进程。 </li>
-</ol>
-</blockquote>
-</li>
-</ul>
-</li>
-</ul>
-<h1 id="轮转调度算法-RR"><a href="#轮转调度算法-RR" class="headerlink" title="轮转调度算法(RR)"></a>轮转调度算法(RR)</h1><ol>
-<li>原理</li>
-</ol>
-<ul>
-<li>在轮转(RR)法中，系统根据 FCFS（先来先服务）策略，将所有的就绪进程排成一个就绪队列，并可设置每隔一定时间间隔(如30 ms)即产生一次中断，激活系统中的进程调度程序，完成一次调度，将CPU分配给队首进程，令其执行。当该进程的时间片耗尽或运行完毕时，系统再次将CPU分配给新的队首进程(或新到达的紧迫进程)。由此，可保证就绪队列中的所有进程在一个确定的时间段内，都能够获得一次CPU执行。</li>
-</ul>
-<ol start="2">
-<li>时间片大小</li>
-</ol>
-<ul>
-<li>时间片小，意味着频繁执行进程调度和进程的上下文的切换，增加系统的开销；时间片长，RR算法退化成FCFS算法，无法满足短作业和交互式用户的需求。</li>
-<li>取大多数进程能在一个时间片内完成所对应的时间。</li>
-</ul>
-<h1 id="优先级调度算法"><a href="#优先级调度算法" class="headerlink" title="优先级调度算法"></a>优先级调度算法</h1><ul>
-<li>将处理机分配给就绪队列中优先级最高的进程。</li>
-<li>优先级类型<ul>
-<li>静态优先级，创建进程时确定，运行过程中不变；<br> - 动态优先级，创建进程时先赋予一个优先级，然后其值随进程的推进或等待时间的增加而改变，如等待时间增长优先级提高；</li>
-</ul>
-</li>
-</ul>
-<h1 id="多队列调度算法"><a href="#多队列调度算法" class="headerlink" title="多队列调度算法"></a>多队列调度算法</h1><ul>
-<li>上述调度算法，系统中仅设置了一个进程的就绪队列，无法满足系统中不同用户对进程调度策略的不同要求。</li>
-<li>该算法将系统中的进程就绪队列从一个拆分为若干个，将不同类型或性质的进程固定分配在不同的就绪队列，不同的就绪队列采用不同的调度算法，一个就绪队列中的进程可以设置不同的优先级，不同的就绪队列本身也可以设置不同的优先级。多队列调度算法由于设置多个就绪队列，因此对每个就绪队列就可以实施不同的调度算法，因此，系统针对不同用户进程的需求，很容易提供多种调度策略。</li>
-</ul>
-<h1 id="多级反馈队列调度算法"><a href="#多级反馈队列调度算法" class="headerlink" title="多级反馈队列调度算法"></a>多级反馈队列调度算法</h1><ul>
-<li>上述算法中，如果未指明进程长度，短进程优先和基于进程长度的抢占式调度算法都将无法使用。多级反馈队列调度算法不必事先知道进程长度，是目前公认的一种比较好的进程调度算法。</li>
-</ul>
-<ol>
-<li>调度机制<ul>
-<li>设置 N 个就绪队列，优先级依次降低，时间片长度逐个增加一倍；</li>
-<li>每个队列采用 FCFS 算法，当新进程进入内存后，先将其放至第一个就绪队列末尾，轮到该进程执行时，若进程在时间片内完成，则撤离系统，否则放入下一个就绪队列末尾；第 N 个队列采用 RR 调度方式；</li>
-<li>按队列优先级调度：当第1~(i-1) 就绪队列均为空时，系统才会调度第 i 队列；当优先级更高的队列有新进程时，把当前执行的进程放入其所在队列末尾，立即去调用优先级更高的进程。</li>
-</ul>
-</li>
-</ol>
-<p><img src="/images/%E5%A4%9A%E7%BA%A7%E5%8F%8D%E9%A6%88%E9%98%9F%E5%88%97%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95.png" alt="多级反馈队列调度算法"><br>2. 性能</p>
-<ul>
-<li>终端型用户。由于终端型用户提交的作业多属于交互型作业，通常较小，系统要能使这些作业在第一队列规定的时间片内完成，便可使终端型用户感到满意。</li>
-<li>短批处理作业用户。对于这类作业，如果可在第一队列中执行完成，便获得与终端型作业一样的响应时间。对于稍长的短作业，也只需在第二和第三队列各执行一时间片完成，其周转时间仍然较短。</li>
-<li>长批处理作业用户。对于长作业,它将依次在第1,2,…，n个队列中运行，然后再按轮转方式运行,用户不必担心其作业长期得不到处理。</li>
-</ul>
+        <p>字符串有三种编辑操作:插入一个字符、删除一个字符或者替换一个字符。 给定两个字符串，编写一个函数判定它们是否只需要一次(或者零次)编辑。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">示例 1:</span><br><span class="line"></span><br><span class="line">输入: </span><br><span class="line">first = &quot;pale&quot;</span><br><span class="line">second = &quot;ple&quot;</span><br><span class="line">输出: True</span><br><span class="line"> </span><br><span class="line"></span><br><span class="line">示例 2:</span><br><span class="line"></span><br><span class="line">输入: </span><br><span class="line">first = &quot;pales&quot;</span><br><span class="line">second = &quot;pal&quot;</span><br><span class="line">输出: False</span><br></pre></td></tr></table></figure>
+<p>题解：长度相差1以上，就直接返回false，然后双指针向前移动，遇见不同，俩字符串长度长的或长度一样的指针向前移动，并且结束循环，最后比较剩余的字符串是否一样。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">oneEditAway</span><span class="params">(String first, String second)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> firstLen = first.length();</span><br><span class="line">        <span class="keyword">int</span> secondLen = second.length();</span><br><span class="line">        <span class="keyword">if</span>(Math.abs(firstLen - secondLen) &gt; <span class="number">1</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> j = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span>(i &lt; firstLen &amp;&amp; j &lt; secondLen)&#123;</span><br><span class="line">            <span class="keyword">char</span> a = first.charAt(i);</span><br><span class="line">            <span class="keyword">char</span> b = second.charAt(j);</span><br><span class="line">            <span class="keyword">if</span>(a != b)&#123;</span><br><span class="line">                <span class="keyword">if</span>(firstLen &gt; secondLen)&#123;</span><br><span class="line">                    i++;</span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span>(firstLen &lt; secondLen)&#123;</span><br><span class="line">                    j++;</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    i++;</span><br><span class="line">                    j++;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            i++;</span><br><span class="line">            j++;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(i == firstLen || j == secondLen)<span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">return</span> first.substring(i,firstLen).equals(second.substring(j,secondLen));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来源：力扣（LeetCode）<br>链接：<a target="_blank" rel="noopener" href="https://leetcode-cn.com/problems/one-away-lcci">https://leetcode-cn.com/problems/one-away-lcci</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
 
       
     </div>
@@ -298,7 +240,7 @@ var a = new Donate({
           </li>
           <li class="post-copyright-link">
           <strong>Post link:  </strong>
-          <a href="/2021/08/28/进程调度算法/" target="_blank" title="进程调度算法">http://seeyj.top/2021/08/28/进程调度算法/</a>
+          <a href="/2021/08/29/一次编辑/" target="_blank" title="一次编辑">http://seeyj.top/2021/08/29/一次编辑/</a>
           </li>
           <li class="post-copyright-license">
             <strong>Copyright Notice:   </strong>
@@ -346,19 +288,10 @@ var a = new Donate({
     
 <nav id="article-nav">
   
-    <a href="/2021/08/29/%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E7%9C%8B%E5%88%B0%E9%A1%B5%E9%9D%A2%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          从输入URL到看到页面发生了什么？
-        
-      </div>
-    </a>
   
-  
-    <a href="/2021/08/28/%E5%90%88%E5%B9%B6%E4%B8%A4%E4%B8%AA%E6%9C%89%E5%BA%8F%E6%95%B0%E7%BB%84/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2021/08/29/%E5%8F%AA%E5%87%BA%E7%8E%B0%E4%B8%80%E6%AC%A1%E7%9A%84%E6%95%B0%E5%AD%97/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">合并两个有序数组</div>
+      <div class="article-nav-title">只出现一次的数字</div>
     </a>
   
 </nav>
@@ -372,7 +305,7 @@ var a = new Donate({
     <div id="toc" class="toc-article">
     <strong class="toc-title">Contents</strong>
     
-        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E8%B0%83%E6%96%B9%E5%BC%8F"><span class="nav-number">1.</span> <span class="nav-text">进程调方式</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BD%AE%E8%BD%AC%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95-RR"><span class="nav-number">2.</span> <span class="nav-text">轮转调度算法(RR)</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BC%98%E5%85%88%E7%BA%A7%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">优先级调度算法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A4%9A%E9%98%9F%E5%88%97%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95"><span class="nav-number">4.</span> <span class="nav-text">多队列调度算法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%A4%9A%E7%BA%A7%E5%8F%8D%E9%A6%88%E9%98%9F%E5%88%97%E8%B0%83%E5%BA%A6%E7%AE%97%E6%B3%95"><span class="nav-number">5.</span> <span class="nav-text">多级反馈队列调度算法</span></a></li></ol>
+        <ol class="nav">None</ol>
     
     </div>
   </aside>
