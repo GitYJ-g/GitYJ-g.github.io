@@ -267,6 +267,120 @@
         
           <section id="main" style="float:none;">
   
+    <article id="post-破坏双亲委派模型"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2021/08/31/%E7%A0%B4%E5%9D%8F%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B/">破坏双亲委派模型</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2021/08/31/%E7%A0%B4%E5%9D%8F%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B/" class="article-date">
+	  <time datetime="2021-08-31T00:30:00.000Z" itemprop="datePublished">2021-08-31</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/java/">java</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          
+破坏双亲委派模型双亲委派主要出现过三次较大规模的“被破坏”的情况。
+
+JDK1.2之后，为避免loadClass()被子类覆盖的可能，建议用户重写findClass()方法；
+JNDI作为java的标准服务，需要调用启动类加载器不认识的外部接口（其他厂商实现的）；
+IBM公司OSGI实现模块化热部署的关键是自定义类加载器机制，更换Bundle（程序模块）时，类加载器也会被换掉，然而类加载机制与双亲委派机制不同。
+
+第一种情况
+问题：类加载器的概念和抽象类的概念在java的第一个版本中就出...
+        </p>
+        <p class="article-more-link">
+          <a href="/2021/08/31/%E7%A0%B4%E5%9D%8F%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B/#more">Read More</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
+    <article id="post-旋转图像"  class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" itemprop="name">
+      <a class="article-title" href="/2021/08/30/%E6%97%8B%E8%BD%AC%E5%9B%BE%E5%83%8F/">旋转图像</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="article-meta">
+      
+	<a href="/2021/08/30/%E6%97%8B%E8%BD%AC%E5%9B%BE%E5%83%8F/" class="article-date">
+	  <time datetime="2021-08-30T13:24:00.000Z" itemprop="datePublished">2021-08-30</time>
+	</a>
+
+      
+    <a class="article-category-link" href="/categories/%E7%AE%97%E6%B3%95/">算法</a>
+
+      
+      
+
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p class="article-excerpt-content">
+          给定一个 n × n 的二维矩阵 matrix 表示一个图像。请你将图像顺时针旋转 90 度。
+你必须在 原地 旋转图像，这意味着你需要直接修改输入的二维矩阵。请不要 使用另一个矩阵来旋转图像。
+1234567891011121314151617181920212223242526示例 1：输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]输出：[[7,4,1],[8,5,2],[9,6,3]]示例 2：输入：matrix = [[5,1,9,11],[2,4,8,...
+        </p>
+        <p class="article-more-link">
+          <a href="/2021/08/30/%E6%97%8B%E8%BD%AC%E5%9B%BE%E5%83%8F/#more">Read More</a>
+        </p>
+      
+    </div>
+    <footer class="article-footer">
+      
+      
+      
+      
+
+    </footer>
+  </div>
+  
+</article>
+
+<!-- Table of Contents -->
+
+
+  
     <article id="post-一次编辑"  class="article article-type-post" itemscope itemprop="blogPost" >
   <div id="articleInner" class="article-inner">
     
@@ -725,116 +839,6 @@ DNS解析将网址解析成真正的IP地址，用于浏览器寻找目标服务
         </p>
         <p class="article-more-link">
           <a href="/2021/08/28/HashMap%E5%A4%B4%E6%8F%92%E6%B3%95%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%BD%A2%E6%88%90%E7%8E%AF%EF%BC%8C%E5%AF%BC%E8%87%B4%E6%AD%BB%E5%BE%AA%E7%8E%AF/#more">Read More</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-进程和线程的比较"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2021/08/27/%E8%BF%9B%E7%A8%8B%E5%92%8C%E7%BA%BF%E7%A8%8B%E7%9A%84%E6%AF%94%E8%BE%83/">进程和线程的比较</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2021/08/27/%E8%BF%9B%E7%A8%8B%E5%92%8C%E7%BA%BF%E7%A8%8B%E7%9A%84%E6%AF%94%E8%BE%83/" class="article-date">
-	  <time datetime="2021-08-27T01:33:00.000Z" itemprop="datePublished">2021-08-27</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/">操作系统</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          由于线程具有许多传统进程所具有的特征，所以又称之为轻型进程(Light-WeightProcess)或进程元，相应地，把传统进程称为重型进程(Heavy-Weight Process)。它相当于只有一个线程的任务。下面从调度性、并发性、系统开销和拥有资源等方面对线程和进程进行比较。
-
-调度的基本单位
-
-在传统的OS 中，进程是作为独立调度和分派的基本单位，因而进程是能独立运行的基本单位。在每次被调度时，都需要进行上下文切换，开销较大。而在引入线程的OS中，已把线程作为调度和分派的基本单位，...
-        </p>
-        <p class="article-more-link">
-          <a href="/2021/08/27/%E8%BF%9B%E7%A8%8B%E5%92%8C%E7%BA%BF%E7%A8%8B%E7%9A%84%E6%AF%94%E8%BE%83/#more">Read More</a>
-        </p>
-      
-    </div>
-    <footer class="article-footer">
-      
-      
-      
-      
-
-    </footer>
-  </div>
-  
-</article>
-
-<!-- Table of Contents -->
-
-
-  
-    <article id="post-二叉树中和为某一值的路径"  class="article article-type-post" itemscope itemprop="blogPost" >
-  <div id="articleInner" class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="article-title" href="/2021/08/25/%E4%BA%8C%E5%8F%89%E6%A0%91%E4%B8%AD%E5%92%8C%E4%B8%BA%E6%9F%90%E4%B8%80%E5%80%BC%E7%9A%84%E8%B7%AF%E5%BE%84/">二叉树中和为某一值的路径</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="article-meta">
-      
-	<a href="/2021/08/25/%E4%BA%8C%E5%8F%89%E6%A0%91%E4%B8%AD%E5%92%8C%E4%B8%BA%E6%9F%90%E4%B8%80%E5%80%BC%E7%9A%84%E8%B7%AF%E5%BE%84/" class="article-date">
-	  <time datetime="2021-08-25T06:22:00.000Z" itemprop="datePublished">2021-08-25</time>
-	</a>
-
-      
-    <a class="article-category-link" href="/categories/%E7%AE%97%E6%B3%95/">算法</a>
-
-      
-      
-
-    </div>
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p class="article-excerpt-content">
-          输入一棵二叉树和一个整数，打印出二叉树中节点值的和为输入整数的所有路径。从树的根节点开始往下一直到叶节点所经过的节点形成一条路径。
-示例:给定如下二叉树，以及目标和 target = 22
-1234567891011121314              5             / \            4   8           /   / \          11  13  4         /  \    / \        7    2  5   1       ...
-        </p>
-        <p class="article-more-link">
-          <a href="/2021/08/25/%E4%BA%8C%E5%8F%89%E6%A0%91%E4%B8%AD%E5%92%8C%E4%B8%BA%E6%9F%90%E4%B8%80%E5%80%BC%E7%9A%84%E8%B7%AF%E5%BE%84/#more">Read More</a>
         </p>
       
     </div>

@@ -1,33 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>Java集合简单总结图</title>
-    <url>/2021/08/25/Java%E9%9B%86%E5%90%88%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93%E5%9B%BE/</url>
-    <content><![CDATA[<p><img src="/images/java%E9%9B%86%E5%90%88.png" alt="java集合"></p>
+    <title>HashMap头插法多线程形成环，导致死循环</title>
+    <url>/2021/08/28/HashMap%E5%A4%B4%E6%8F%92%E6%B3%95%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%BD%A2%E6%88%90%E7%8E%AF%EF%BC%8C%E5%AF%BC%E8%87%B4%E6%AD%BB%E5%BE%AA%E7%8E%AF/</url>
+    <content><![CDATA[<h1 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h1><ul>
+<li>在 jdk 1.7 及以前HashMap使用头插法，多线程的情况下容易形成环。</li>
+</ul>
+<p>假设在下标为1处有一个长度为2的链表，如果再次插入一个节点，就需要resize()扩容。 </p>
+<p><img src="/images/pasted-1.png" alt="HasMap"></p>
+<p>此时两个线程A和B执行put()操作，A线程先执行，执行完transfer () 中的<code>Entry&lt;K,V&gt; next = e.next;</code>被挂起，此时e指针指向5，next指向7，如图所示。</p>
+<p><img src="/images/pasted-2.png" alt="线程A执行"></p>
+<p>此时线程B执行，将数组扩大两倍，链表仍散列在下标为1处，由于使用了头插法，节点位置将会交换，如图所示。</p>
+<p><img src="/images/pasted-3.png" alt="线程B执行"></p>
+<p>这时候线程A又执行，因为原先e指向5，next执行7，继续执行下一条语句<code>e.next = newTable[i];</code>，这时会出现5指向7的情况，如图所示。</p>
+<p><img src="/images/pasted-4.png" alt="链表形成"></p>
+<h1 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h1><p>那么在get取值的时候，由于环的存在，，就会不停止地寻找节点值，导致死循环。</p>
 ]]></content>
       <categories>
         <category>java</category>
       </categories>
-  </entry>
-  <entry>
-    <title>从输入URL到看到页面发生了什么？</title>
-    <url>/2021/08/29/%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E7%9C%8B%E5%88%B0%E9%A1%B5%E9%9D%A2%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F/</url>
-    <content><![CDATA[<p>从输入URL到看到页面发生了什么？</p>
-<ul>
-<li>DNS解析</li>
-<li>发起TCP连接</li>
-<li>发送HTTP请求</li>
-<li>浏览器处理请求并返回HTTP报文</li>
-<li>浏览器解析渲染页面</li>
-<li>连接结束</li>
-</ul>
-<p>其中每一步的具体过程</p>
-<h2 id="DNS解析"><a href="#DNS解析" class="headerlink" title="DNS解析"></a>DNS解析</h2><p>将网址解析成真正的IP地址，用于浏览器寻找目标服务器，DNS（域名系统）是一个由分层的DNS服务器实现的分布式数据库，一个使得主机能够查询分布式数据库的应用层协议，使用UDP协议，端口53。<br><img src="/images/DNS%E8%A7%A3%E6%9E%90.gif" alt="DNS解析"></p>
-<p>递归过程：本地DNS服务器$\Rightarrow$ 根服务器 $\Rightarrow$ 顶级域服务器（TLD）$\Rightarrow$ 权威服务器<br>也可以迭代查询。DNS服务器可以通过DNS缓存将主机名到IP地址的映射保存在本地。</p>
-<h2 id="TCP连接"><a href="#TCP连接" class="headerlink" title="TCP连接"></a>TCP连接</h2>]]></content>
-      <categories>
-        <category>操作系统</category>
-      </categories>
+      <tags>
+        <tag>HashMap</tag>
+      </tags>
   </entry>
   <entry>
     <title>Java内存区域与内存溢出异常</title>
@@ -151,51 +145,39 @@
       </categories>
   </entry>
   <entry>
-    <title>二叉树中和为某一值的路径</title>
-    <url>/2021/08/25/%E4%BA%8C%E5%8F%89%E6%A0%91%E4%B8%AD%E5%92%8C%E4%B8%BA%E6%9F%90%E4%B8%80%E5%80%BC%E7%9A%84%E8%B7%AF%E5%BE%84/</url>
-    <content><![CDATA[<p>输入一棵二叉树和一个整数，打印出二叉树中节点值的和为输入整数的所有路径。从树的根节点开始往下一直到叶节点所经过的节点形成一条路径。</p>
-<p>示例:<br>给定如下二叉树，以及目标和 target = 22</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">              5</span><br><span class="line">             / \</span><br><span class="line">            4   8</span><br><span class="line">           /   / \</span><br><span class="line">          11  13  4</span><br><span class="line">         /  \    / \</span><br><span class="line">        7    2  5   1</span><br><span class="line">        </span><br><span class="line">返回:</span><br><span class="line"></span><br><span class="line">[</span><br><span class="line">   [5,4,11,2],</span><br><span class="line">   [5,8,4,5]</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
-
-<p>提示：</p>
-<p>节点总数 &lt;= 10000</p>
-<hr>
-<p>解题：可以使用深度遍历，到达底部回溯移除叶子节点，在深度遍历其他子树。判断是否路径节点值和等于target，可以每次深度遍历（向下遍历）的时候将target值减去当前节点值，到了叶子节点，如果target等于0，就表示该路径满足条件。</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Definition for a binary tree node.</span></span><br><span class="line"><span class="comment"> * public class TreeNode &#123;</span></span><br><span class="line"><span class="comment"> *     int val;</span></span><br><span class="line"><span class="comment"> *     TreeNode left;</span></span><br><span class="line"><span class="comment"> *     TreeNode right;</span></span><br><span class="line"><span class="comment"> *     TreeNode() &#123;&#125;</span></span><br><span class="line"><span class="comment"> *     TreeNode(int val) &#123; this.val = val; &#125;</span></span><br><span class="line"><span class="comment"> *     TreeNode(int val, TreeNode left, TreeNode right) &#123;</span></span><br><span class="line"><span class="comment"> *         this.val = val;</span></span><br><span class="line"><span class="comment"> *         this.left = left;</span></span><br><span class="line"><span class="comment"> *         this.right = right;</span></span><br><span class="line"><span class="comment"> *     &#125;</span></span><br><span class="line"><span class="comment"> * &#125;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; list = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">    LinkedList&lt;Integer&gt; path = <span class="keyword">new</span> LinkedList&lt;&gt;();</span><br><span class="line">    <span class="keyword">public</span> List&lt;List&lt;Integer&gt;&gt; pathSum(TreeNode root, <span class="keyword">int</span> target) &#123;</span><br><span class="line">        dfs(root,target);</span><br><span class="line">        <span class="keyword">return</span> list;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">dfs</span><span class="params">(TreeNode node, <span class="keyword">int</span> target)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(node == <span class="keyword">null</span>)<span class="keyword">return</span> ;</span><br><span class="line">        path.add(node.val);</span><br><span class="line">        target -= node.val;</span><br><span class="line">        <span class="keyword">if</span>(target == <span class="number">0</span> &amp;&amp; node.left == <span class="keyword">null</span> &amp;&amp; node.right == <span class="keyword">null</span>)&#123;</span><br><span class="line">            list.add(<span class="keyword">new</span> LinkedList(path));</span><br><span class="line">        &#125;</span><br><span class="line">        dfs(node.left,target);</span><br><span class="line">        dfs(node.right,target);</span><br><span class="line">        path.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-
-<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/er-cha-shu-zhong-he-wei-mou-yi-zhi-de-lu-jing-lcof">https://leetcode-cn.com/problems/er-cha-shu-zhong-he-wei-mou-yi-zhi-de-lu-jing-lcof</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
-]]></content>
-      <categories>
-        <category>算法</category>
-      </categories>
-      <tags>
-        <tag>二叉树</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>HashMap头插法多线程形成环，导致死循环</title>
-    <url>/2021/08/28/HashMap%E5%A4%B4%E6%8F%92%E6%B3%95%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%BD%A2%E6%88%90%E7%8E%AF%EF%BC%8C%E5%AF%BC%E8%87%B4%E6%AD%BB%E5%BE%AA%E7%8E%AF/</url>
-    <content><![CDATA[<h1 id="过程"><a href="#过程" class="headerlink" title="过程"></a>过程</h1><ul>
-<li>在 jdk 1.7 及以前HashMap使用头插法，多线程的情况下容易形成环。</li>
+    <title>Redis-字典（hash表的底层实现）</title>
+    <url>/2021/01/10/Redis-%E5%AD%97%E5%85%B8%EF%BC%88hash%E8%A1%A8%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%EF%BC%89/</url>
+    <content><![CDATA[<p>字典，又称为符号表、关联数组或映射，是一种保存键值对的抽象数据结构。字典中每个键都是独一无二的，可以根据键对键值对进行操作。Redis所使用的C语言并没有内置字典，因此Redis构建了自己的字典实现。<br>Redis的数据库就是使用字典来作为底层实现的，对数据库的增删改查也是构建在对字典的操作之上的。</p>
+<p>例如，SET msg “hello world”，这个键值对就是保存在代表数据库字典里面的。</p>
+<p>除了用来表示数据库之外，字典还是哈希键的底层实现之一，当一个哈希键包含的键值对比较多，又或键值对中的元素都是比较长的字符串时，Redis就会使用字典作为哈希键的底层实现。</p>
+<h1 id="字典的实现"><a href="#字典的实现" class="headerlink" title="字典的实现"></a>字典的实现</h1><p>Redis的字典使用哈希表作为底层实现，一个哈希表里面可以有多个哈希表节点，而每个哈希表节点只能保存一个键值对。</p>
+<h2 id="哈希表"><a href="#哈希表" class="headerlink" title="哈希表"></a>哈希表</h2><ul>
+<li>Redis 字典所使用的哈希表由 dict.h/dictht 结构定义：</li>
 </ul>
-<p>假设在下标为1处有一个长度为2的链表，如果再次插入一个节点，就需要resize()扩容。 </p>
-<p><img src="/images/pasted-1.png" alt="HasMap"></p>
-<p>此时两个线程A和B执行put()操作，A线程先执行，执行完transfer () 中的<code>Entry&lt;K,V&gt; next = e.next;</code>被挂起，此时e指针指向5，next指向7，如图所示。</p>
-<p><img src="/images/pasted-2.png" alt="线程A执行"></p>
-<p>此时线程B执行，将数组扩大两倍，链表仍散列在下标为1处，由于使用了头插法，节点位置将会交换，如图所示。</p>
-<p><img src="/images/pasted-3.png" alt="线程B执行"></p>
-<p>这时候线程A又执行，因为原先e指向5，next执行7，继续执行下一条语句<code>e.next = newTable[i];</code>，这时会出现5指向7的情况，如图所示。</p>
-<p><img src="/images/pasted-4.png" alt="链表形成"></p>
-<h1 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h1><p>那么在get取值的时候，由于环的存在，，就会不停止地寻找节点值，导致死循环。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dictht</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 哈希表数组，每个元素都是一个指向 dict.h/dictEntry 结构的指针， 每个 dictEntry 结构保存着一个键值对。</span></span><br><span class="line">    dictEntry **table;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 哈希表大小，table 数组的大小</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> size;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 哈希表大小掩码，用于计算索引值</span></span><br><span class="line">    <span class="comment">// 总是等于 size - 1， 这个属性和哈希值一起决定一个键应该被放到 table 数组的哪个索引上面。</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> sizemask;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 该哈希表已有节点的数量</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> used;</span><br><span class="line"></span><br><span class="line">&#125; dictht;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>下图是一个空的哈希表<br><img src="/images/hash%E8%A1%A8.png" alt="hash表"></p>
+<h2 id="哈希表节点"><a href="#哈希表节点" class="headerlink" title="哈希表节点"></a>哈希表节点</h2><p>哈希表节点使用 dictEntry 结构表示， 每个 dictEntry 结构都保存着一个键值对：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dictEntry</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 键</span></span><br><span class="line">    <span class="keyword">void</span> *key;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 值可以是一个指针， 或者是一个 uint64_t 整数， 又或者是一个 int64_t 整数。</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="keyword">void</span> *val;</span><br><span class="line">        <span class="keyword">uint64_t</span> u64;</span><br><span class="line">        <span class="keyword">int64_t</span> s64;</span><br><span class="line">    &#125; v;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向下个哈希表节点，形成链表，用解决hash冲突</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">dictEntry</span> *<span class="title">next</span>;</span></span><br><span class="line"></span><br><span class="line">&#125; dictEntry;</span><br></pre></td></tr></table></figure>
+
+<p>下图是将两个索引值相同的键k1和k0连接在一起。<br><img src="/images/hash%E8%A1%A8%E5%8A%A0%E8%8A%82%E7%82%B9.png" alt="Hash表加节点"></p>
+<h2 id="字典"><a href="#字典" class="headerlink" title="字典"></a>字典</h2><p>Redis 中的字典由 dict.h/dict 结构表示：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dict</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 类型特定函数</span></span><br><span class="line">    dictType *type;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 私有数据</span></span><br><span class="line">    <span class="keyword">void</span> *privdata;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 哈希表</span></span><br><span class="line">    dictht ht[<span class="number">2</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// rehash 索引</span></span><br><span class="line">    <span class="comment">// 当 rehash 不在进行时，值为 -1</span></span><br><span class="line">    <span class="keyword">int</span> rehashidx; <span class="comment">/* rehashing not in progress if rehashidx == -1 */</span></span><br><span class="line"></span><br><span class="line">&#125; dict;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>type 属性是一个指向 dictType 结构的指针， 每个 dictType 结构保存了一簇用于操作特定类型键值对的函数， Redis 会为用途不同的字典设置不同的类型特定函数。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dictType</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算哈希值的函数</span></span><br><span class="line">    <span class="function"><span class="keyword">unsigned</span> <span class="title">int</span> <span class="params">(*hashFunction)</span><span class="params">(<span class="keyword">const</span> <span class="keyword">void</span> *key)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 复制键的函数</span></span><br><span class="line">    <span class="keyword">void</span> *(*keyDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 复制值的函数</span></span><br><span class="line">    <span class="keyword">void</span> *(*valDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *obj);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 对比键的函数</span></span><br><span class="line">    <span class="keyword">int</span> (*keyCompare)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key1, <span class="keyword">const</span> <span class="keyword">void</span> *key2);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 销毁键的函数</span></span><br><span class="line">    <span class="keyword">void</span> (*keyDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *key);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 销毁值的函数</span></span><br><span class="line">    <span class="keyword">void</span> (*valDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *obj);</span><br><span class="line"></span><br><span class="line">&#125; dictType;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>ht 属性是一个包含两个项的数组， 数组中的每个项都是一个 dictht 哈希表， 一般情况下， 字典只使用 ht[0] 哈希表， ht[1] 哈希表只会在对 ht[0] 哈希表进行 rehash 时使用。</li>
+<li>除了 ht[1] 之外， 另一个和 rehash 有关的属性就是 rehashidx ： 它记录了 rehash 目前的进度， 如果目前没有在进行 rehash ， 那么它的值为 -1 。<br>一个普通状态下（没有进行 rehash）的字典：<br><img src="/images/%E5%AD%97%E5%85%B8.png" alt="字典"></li>
+</ul>
 ]]></content>
       <categories>
-        <category>java</category>
+        <category>redis</category>
       </categories>
       <tags>
-        <tag>HashMap</tag>
+        <tag>字典</tag>
       </tags>
   </entry>
   <entry>
@@ -234,39 +216,87 @@
       </tags>
   </entry>
   <entry>
-    <title>Redis-字典（hash表的底层实现）</title>
-    <url>/2021/01/10/Redis-%E5%AD%97%E5%85%B8%EF%BC%88hash%E8%A1%A8%E7%9A%84%E5%BA%95%E5%B1%82%E5%AE%9E%E7%8E%B0%EF%BC%89/</url>
-    <content><![CDATA[<p>字典，又称为符号表、关联数组或映射，是一种保存键值对的抽象数据结构。字典中每个键都是独一无二的，可以根据键对键值对进行操作。Redis所使用的C语言并没有内置字典，因此Redis构建了自己的字典实现。<br>Redis的数据库就是使用字典来作为底层实现的，对数据库的增删改查也是构建在对字典的操作之上的。</p>
-<p>例如，SET msg “hello world”，这个键值对就是保存在代表数据库字典里面的。</p>
-<p>除了用来表示数据库之外，字典还是哈希键的底层实现之一，当一个哈希键包含的键值对比较多，又或键值对中的元素都是比较长的字符串时，Redis就会使用字典作为哈希键的底层实现。</p>
-<h1 id="字典的实现"><a href="#字典的实现" class="headerlink" title="字典的实现"></a>字典的实现</h1><p>Redis的字典使用哈希表作为底层实现，一个哈希表里面可以有多个哈希表节点，而每个哈希表节点只能保存一个键值对。</p>
-<h2 id="哈希表"><a href="#哈希表" class="headerlink" title="哈希表"></a>哈希表</h2><ul>
-<li>Redis 字典所使用的哈希表由 dict.h/dictht 结构定义：</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dictht</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 哈希表数组，每个元素都是一个指向 dict.h/dictEntry 结构的指针， 每个 dictEntry 结构保存着一个键值对。</span></span><br><span class="line">    dictEntry **table;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 哈希表大小，table 数组的大小</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> size;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 哈希表大小掩码，用于计算索引值</span></span><br><span class="line">    <span class="comment">// 总是等于 size - 1， 这个属性和哈希值一起决定一个键应该被放到 table 数组的哪个索引上面。</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> sizemask;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 该哈希表已有节点的数量</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> used;</span><br><span class="line"></span><br><span class="line">&#125; dictht;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>下图是一个空的哈希表<br><img src="/images/hash%E8%A1%A8.png" alt="hash表"></p>
-<h2 id="哈希表节点"><a href="#哈希表节点" class="headerlink" title="哈希表节点"></a>哈希表节点</h2><p>哈希表节点使用 dictEntry 结构表示， 每个 dictEntry 结构都保存着一个键值对：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dictEntry</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 键</span></span><br><span class="line">    <span class="keyword">void</span> *key;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 值可以是一个指针， 或者是一个 uint64_t 整数， 又或者是一个 int64_t 整数。</span></span><br><span class="line">    <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">        <span class="keyword">void</span> *val;</span><br><span class="line">        <span class="keyword">uint64_t</span> u64;</span><br><span class="line">        <span class="keyword">int64_t</span> s64;</span><br><span class="line">    &#125; v;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向下个哈希表节点，形成链表，用解决hash冲突</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">dictEntry</span> *<span class="title">next</span>;</span></span><br><span class="line"></span><br><span class="line">&#125; dictEntry;</span><br></pre></td></tr></table></figure>
-
-<p>下图是将两个索引值相同的键k1和k0连接在一起。<br><img src="/images/hash%E8%A1%A8%E5%8A%A0%E8%8A%82%E7%82%B9.png" alt="Hash表加节点"></p>
-<h2 id="字典"><a href="#字典" class="headerlink" title="字典"></a>字典</h2><p>Redis 中的字典由 dict.h/dict 结构表示：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dict</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 类型特定函数</span></span><br><span class="line">    dictType *type;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 私有数据</span></span><br><span class="line">    <span class="keyword">void</span> *privdata;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 哈希表</span></span><br><span class="line">    dictht ht[<span class="number">2</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// rehash 索引</span></span><br><span class="line">    <span class="comment">// 当 rehash 不在进行时，值为 -1</span></span><br><span class="line">    <span class="keyword">int</span> rehashidx; <span class="comment">/* rehashing not in progress if rehashidx == -1 */</span></span><br><span class="line"></span><br><span class="line">&#125; dict;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>type 属性是一个指向 dictType 结构的指针， 每个 dictType 结构保存了一簇用于操作特定类型键值对的函数， Redis 会为用途不同的字典设置不同的类型特定函数。</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">dictType</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算哈希值的函数</span></span><br><span class="line">    <span class="function"><span class="keyword">unsigned</span> <span class="title">int</span> <span class="params">(*hashFunction)</span><span class="params">(<span class="keyword">const</span> <span class="keyword">void</span> *key)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 复制键的函数</span></span><br><span class="line">    <span class="keyword">void</span> *(*keyDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 复制值的函数</span></span><br><span class="line">    <span class="keyword">void</span> *(*valDup)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *obj);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 对比键的函数</span></span><br><span class="line">    <span class="keyword">int</span> (*keyCompare)(<span class="keyword">void</span> *privdata, <span class="keyword">const</span> <span class="keyword">void</span> *key1, <span class="keyword">const</span> <span class="keyword">void</span> *key2);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 销毁键的函数</span></span><br><span class="line">    <span class="keyword">void</span> (*keyDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *key);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 销毁值的函数</span></span><br><span class="line">    <span class="keyword">void</span> (*valDestructor)(<span class="keyword">void</span> *privdata, <span class="keyword">void</span> *obj);</span><br><span class="line"></span><br><span class="line">&#125; dictType;</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>ht 属性是一个包含两个项的数组， 数组中的每个项都是一个 dictht 哈希表， 一般情况下， 字典只使用 ht[0] 哈希表， ht[1] 哈希表只会在对 ht[0] 哈希表进行 rehash 时使用。</li>
-<li>除了 ht[1] 之外， 另一个和 rehash 有关的属性就是 rehashidx ： 它记录了 rehash 目前的进度， 如果目前没有在进行 rehash ， 那么它的值为 -1 。<br>一个普通状态下（没有进行 rehash）的字典：<br><img src="/images/%E5%AD%97%E5%85%B8.png" alt="字典"></li>
-</ul>
+    <title>Java集合简单总结图</title>
+    <url>/2021/08/25/Java%E9%9B%86%E5%90%88%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93%E5%9B%BE/</url>
+    <content><![CDATA[<p><img src="/images/java%E9%9B%86%E5%90%88.png" alt="java集合"></p>
 ]]></content>
       <categories>
-        <category>redis</category>
+        <category>java</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>一次编辑</title>
+    <url>/2021/08/29/%E4%B8%80%E6%AC%A1%E7%BC%96%E8%BE%91/</url>
+    <content><![CDATA[<p>字符串有三种编辑操作:插入一个字符、删除一个字符或者替换一个字符。 给定两个字符串，编写一个函数判定它们是否只需要一次(或者零次)编辑。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">示例 1:</span><br><span class="line"></span><br><span class="line">输入: </span><br><span class="line">first = &quot;pale&quot;</span><br><span class="line">second = &quot;ple&quot;</span><br><span class="line">输出: True</span><br><span class="line"> </span><br><span class="line"></span><br><span class="line">示例 2:</span><br><span class="line"></span><br><span class="line">输入: </span><br><span class="line">first = &quot;pales&quot;</span><br><span class="line">second = &quot;pal&quot;</span><br><span class="line">输出: False</span><br></pre></td></tr></table></figure>
+<p>题解：长度相差1以上，就直接返回false，然后双指针向前移动，遇见不同，俩字符串长度长的或长度一样的指针向前移动，并且结束循环，最后比较剩余的字符串是否一样。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">oneEditAway</span><span class="params">(String first, String second)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> firstLen = first.length();</span><br><span class="line">        <span class="keyword">int</span> secondLen = second.length();</span><br><span class="line">        <span class="keyword">if</span>(Math.abs(firstLen - secondLen) &gt; <span class="number">1</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> j = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span>(i &lt; firstLen &amp;&amp; j &lt; secondLen)&#123;</span><br><span class="line">            <span class="keyword">char</span> a = first.charAt(i);</span><br><span class="line">            <span class="keyword">char</span> b = second.charAt(j);</span><br><span class="line">            <span class="keyword">if</span>(a != b)&#123;</span><br><span class="line">                <span class="keyword">if</span>(firstLen &gt; secondLen)&#123;</span><br><span class="line">                    i++;</span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span>(firstLen &lt; secondLen)&#123;</span><br><span class="line">                    j++;</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    i++;</span><br><span class="line">                    j++;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            i++;</span><br><span class="line">            j++;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(i == firstLen || j == secondLen)<span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">return</span> first.substring(i,firstLen).equals(second.substring(j,secondLen));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/one-away-lcci">https://leetcode-cn.com/problems/one-away-lcci</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>二叉树中和为某一值的路径</title>
+    <url>/2021/08/25/%E4%BA%8C%E5%8F%89%E6%A0%91%E4%B8%AD%E5%92%8C%E4%B8%BA%E6%9F%90%E4%B8%80%E5%80%BC%E7%9A%84%E8%B7%AF%E5%BE%84/</url>
+    <content><![CDATA[<p>输入一棵二叉树和一个整数，打印出二叉树中节点值的和为输入整数的所有路径。从树的根节点开始往下一直到叶节点所经过的节点形成一条路径。</p>
+<p>示例:<br>给定如下二叉树，以及目标和 target = 22</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">              5</span><br><span class="line">             / \</span><br><span class="line">            4   8</span><br><span class="line">           /   / \</span><br><span class="line">          11  13  4</span><br><span class="line">         /  \    / \</span><br><span class="line">        7    2  5   1</span><br><span class="line">        </span><br><span class="line">返回:</span><br><span class="line"></span><br><span class="line">[</span><br><span class="line">   [5,4,11,2],</span><br><span class="line">   [5,8,4,5]</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<p>提示：</p>
+<p>节点总数 &lt;= 10000</p>
+<hr>
+<p>解题：可以使用深度遍历，到达底部回溯移除叶子节点，在深度遍历其他子树。判断是否路径节点值和等于target，可以每次深度遍历（向下遍历）的时候将target值减去当前节点值，到了叶子节点，如果target等于0，就表示该路径满足条件。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Definition for a binary tree node.</span></span><br><span class="line"><span class="comment"> * public class TreeNode &#123;</span></span><br><span class="line"><span class="comment"> *     int val;</span></span><br><span class="line"><span class="comment"> *     TreeNode left;</span></span><br><span class="line"><span class="comment"> *     TreeNode right;</span></span><br><span class="line"><span class="comment"> *     TreeNode() &#123;&#125;</span></span><br><span class="line"><span class="comment"> *     TreeNode(int val) &#123; this.val = val; &#125;</span></span><br><span class="line"><span class="comment"> *     TreeNode(int val, TreeNode left, TreeNode right) &#123;</span></span><br><span class="line"><span class="comment"> *         this.val = val;</span></span><br><span class="line"><span class="comment"> *         this.left = left;</span></span><br><span class="line"><span class="comment"> *         this.right = right;</span></span><br><span class="line"><span class="comment"> *     &#125;</span></span><br><span class="line"><span class="comment"> * &#125;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    List&lt;List&lt;Integer&gt;&gt; list = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">    LinkedList&lt;Integer&gt; path = <span class="keyword">new</span> LinkedList&lt;&gt;();</span><br><span class="line">    <span class="keyword">public</span> List&lt;List&lt;Integer&gt;&gt; pathSum(TreeNode root, <span class="keyword">int</span> target) &#123;</span><br><span class="line">        dfs(root,target);</span><br><span class="line">        <span class="keyword">return</span> list;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">dfs</span><span class="params">(TreeNode node, <span class="keyword">int</span> target)</span></span>&#123;</span><br><span class="line">        <span class="keyword">if</span>(node == <span class="keyword">null</span>)<span class="keyword">return</span> ;</span><br><span class="line">        path.add(node.val);</span><br><span class="line">        target -= node.val;</span><br><span class="line">        <span class="keyword">if</span>(target == <span class="number">0</span> &amp;&amp; node.left == <span class="keyword">null</span> &amp;&amp; node.right == <span class="keyword">null</span>)&#123;</span><br><span class="line">            list.add(<span class="keyword">new</span> LinkedList(path));</span><br><span class="line">        &#125;</span><br><span class="line">        dfs(node.left,target);</span><br><span class="line">        dfs(node.right,target);</span><br><span class="line">        path.removeLast();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/er-cha-shu-zhong-he-wei-mou-yi-zhi-de-lu-jing-lcof">https://leetcode-cn.com/problems/er-cha-shu-zhong-he-wei-mou-yi-zhi-de-lu-jing-lcof</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+]]></content>
+      <categories>
+        <category>算法</category>
       </categories>
       <tags>
-        <tag>字典</tag>
+        <tag>二叉树</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>从输入URL到看到页面发生了什么？</title>
+    <url>/2021/08/29/%E4%BB%8E%E8%BE%93%E5%85%A5URL%E5%88%B0%E7%9C%8B%E5%88%B0%E9%A1%B5%E9%9D%A2%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9F/</url>
+    <content><![CDATA[<p>从输入URL到看到页面发生了什么？</p>
+<ul>
+<li>DNS解析</li>
+<li>发起TCP连接</li>
+<li>发送HTTP请求</li>
+<li>浏览器处理请求并返回HTTP报文</li>
+<li>浏览器解析渲染页面</li>
+<li>连接结束</li>
+</ul>
+<p>其中每一步的具体过程</p>
+<h2 id="DNS解析"><a href="#DNS解析" class="headerlink" title="DNS解析"></a>DNS解析</h2><p>将网址解析成真正的IP地址，用于浏览器寻找目标服务器，DNS（域名系统）是一个由分层的DNS服务器实现的分布式数据库，一个使得主机能够查询分布式数据库的应用层协议，使用UDP协议，端口53。<br><img src="/images/DNS%E8%A7%A3%E6%9E%90.gif" alt="DNS解析"></p>
+<p>递归过程：本地DNS服务器$\Rightarrow$ 根服务器 $\Rightarrow$ 顶级域服务器（TLD）$\Rightarrow$ 权威服务器<br>也可以迭代查询。DNS服务器可以通过DNS缓存将主机名到IP地址的映射保存在本地。</p>
+<h2 id="TCP连接"><a href="#TCP连接" class="headerlink" title="TCP连接"></a>TCP连接</h2>]]></content>
+      <categories>
+        <category>操作系统</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>只出现一次的数字</title>
+    <url>/2021/08/29/%E5%8F%AA%E5%87%BA%E7%8E%B0%E4%B8%80%E6%AC%A1%E7%9A%84%E6%95%B0%E5%AD%97/</url>
+    <content><![CDATA[<p>给你一个整数数组 nums ，除某个元素仅出现 一次 外，其余每个元素都恰出现 三次 。请你找出并返回那个只出现了一次的元素。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">示例 1：</span><br><span class="line"></span><br><span class="line">输入：nums = [2,2,3,2]</span><br><span class="line">输出：3</span><br><span class="line">示例 2：</span><br><span class="line"></span><br><span class="line">输入：nums = [0,1,0,1,0,1,100]</span><br><span class="line">输出：100</span><br><span class="line"> </span><br><span class="line">提示：</span><br><span class="line"></span><br><span class="line">1 &lt;= nums.length &lt;= 3 * 104</span><br><span class="line">-231 &lt;= nums[i] &lt;= 231 - 1</span><br><span class="line">nums 中，除某个元素仅出现 一次 外，其余每个元素都恰出现 三次</span><br></pre></td></tr></table></figure>
+<p>题解：除元素 m 出现一次外，其余元素都出现三次，那么其余元素第 i 个二进制位之和是3 的倍数，不是 3 的倍数，表示出现一次的数字在该位为 1。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">singleNumber</span><span class="params">(<span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> res = <span class="number">0</span>;</span><br><span class="line">        <span class="comment">// 对int的每一位进行计算</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i &lt; <span class="number">32</span>;i++)&#123;</span><br><span class="line">            <span class="comment">// 记录第i位和</span></span><br><span class="line">            <span class="keyword">int</span> temp = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> num:nums)&#123;</span><br><span class="line">                temp += (num&gt;&gt;&gt;i) &amp; <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 判断是否是3的倍数</span></span><br><span class="line">            <span class="keyword">if</span>(temp%<span class="number">3</span> != <span class="number">0</span>)&#123;</span><br><span class="line">                res |= (<span class="number">1</span>&lt;&lt;i);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/WGki4K">https://leetcode-cn.com/problems/WGki4K</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+      <tags>
+        <tag>数组</tag>
       </tags>
   </entry>
   <entry>
@@ -307,22 +337,6 @@
       </categories>
   </entry>
   <entry>
-    <title>只出现一次的数字</title>
-    <url>/2021/08/29/%E5%8F%AA%E5%87%BA%E7%8E%B0%E4%B8%80%E6%AC%A1%E7%9A%84%E6%95%B0%E5%AD%97/</url>
-    <content><![CDATA[<p>给你一个整数数组 nums ，除某个元素仅出现 一次 外，其余每个元素都恰出现 三次 。请你找出并返回那个只出现了一次的元素。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">示例 1：</span><br><span class="line"></span><br><span class="line">输入：nums = [2,2,3,2]</span><br><span class="line">输出：3</span><br><span class="line">示例 2：</span><br><span class="line"></span><br><span class="line">输入：nums = [0,1,0,1,0,1,100]</span><br><span class="line">输出：100</span><br><span class="line"> </span><br><span class="line">提示：</span><br><span class="line"></span><br><span class="line">1 &lt;= nums.length &lt;= 3 * 104</span><br><span class="line">-231 &lt;= nums[i] &lt;= 231 - 1</span><br><span class="line">nums 中，除某个元素仅出现 一次 外，其余每个元素都恰出现 三次</span><br></pre></td></tr></table></figure>
-<p>题解：除元素 m 出现一次外，其余元素都出现三次，那么其余元素第 i 个二进制位之和是3 的倍数，不是 3 的倍数，表示出现一次的数字在该位为 1。</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">singleNumber</span><span class="params">(<span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> res = <span class="number">0</span>;</span><br><span class="line">        <span class="comment">// 对int的每一位进行计算</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i &lt; <span class="number">32</span>;i++)&#123;</span><br><span class="line">            <span class="comment">// 记录第i位和</span></span><br><span class="line">            <span class="keyword">int</span> temp = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> num:nums)&#123;</span><br><span class="line">                temp += (num&gt;&gt;&gt;i) &amp; <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">// 判断是否是3的倍数</span></span><br><span class="line">            <span class="keyword">if</span>(temp%<span class="number">3</span> != <span class="number">0</span>)&#123;</span><br><span class="line">                res |= (<span class="number">1</span>&lt;&lt;i);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> res;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/WGki4K">https://leetcode-cn.com/problems/WGki4K</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
-]]></content>
-      <categories>
-        <category>算法</category>
-      </categories>
-      <tags>
-        <tag>数组</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>合并两个有序数组</title>
     <url>/2021/08/28/%E5%90%88%E5%B9%B6%E4%B8%A4%E4%B8%AA%E6%9C%89%E5%BA%8F%E6%95%B0%E7%BB%84/</url>
     <content><![CDATA[<h2 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h2><p>给你两个按 非递减顺序 排列的整数数组 nums1 和 nums2，另有两个整数 m 和 n ，分别表示 nums1 和 nums2 中的元素数目。</p>
@@ -341,6 +355,113 @@
       </categories>
       <tags>
         <tag>数组</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>旋转图像</title>
+    <url>/2021/08/30/%E6%97%8B%E8%BD%AC%E5%9B%BE%E5%83%8F/</url>
+    <content><![CDATA[<p>给定一个 n × n 的二维矩阵 matrix 表示一个图像。请你将图像顺时针旋转 90 度。</p>
+<p>你必须在 原地 旋转图像，这意味着你需要直接修改输入的二维矩阵。请不要 使用另一个矩阵来旋转图像。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">示例 1：</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">输入：matrix = [[1,2,3],[4,5,6],[7,8,9]]</span><br><span class="line">输出：[[7,4,1],[8,5,2],[9,6,3]]</span><br><span class="line">示例 2：</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">输入：matrix = [[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]</span><br><span class="line">输出：[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]</span><br><span class="line">示例 3：</span><br><span class="line"></span><br><span class="line">输入：matrix = [[1]]</span><br><span class="line">输出：[[1]]</span><br><span class="line">示例 4：</span><br><span class="line"></span><br><span class="line">输入：matrix = [[1,2],[3,4]]</span><br><span class="line">输出：[[3,1],[4,2]]</span><br><span class="line"> </span><br><span class="line"></span><br><span class="line">提示：</span><br><span class="line"></span><br><span class="line">matrix.length == n</span><br><span class="line">matrix[i].length == n</span><br><span class="line">1 &lt;= n &lt;= 20</span><br><span class="line">-1000 &lt;= matrix[i][j] &lt;= 1000</span><br></pre></td></tr></table></figure>
+
+<p>题解：先水平翻转，再主对角线翻转，可以得到顺时针旋转 90 度图像。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">rotate</span><span class="params">(<span class="keyword">int</span>[][] matrix)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> n = matrix.length;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>;i&lt;n/<span class="number">2</span>;i++)&#123;</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> j = <span class="number">0</span>;j &lt; n;j++)&#123;</span><br><span class="line">                <span class="keyword">int</span> temp = matrix[i][j];</span><br><span class="line">                matrix[i][j] = matrix[n-i-<span class="number">1</span>][j];</span><br><span class="line">                matrix[n-i-<span class="number">1</span>][j] = temp;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; n;i++)&#123;</span><br><span class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> j = i;j &lt; n;j++)&#123;</span><br><span class="line">                <span class="keyword">int</span> temp = matrix[i][j];</span><br><span class="line">                matrix[i][j] = matrix[j][i];</span><br><span class="line">                matrix[j][i] = temp;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/rotate-image">https://leetcode-cn.com/problems/rotate-image</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+      <tags>
+        <tag>数组</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>破坏双亲委派模型</title>
+    <url>/2021/08/31/%E7%A0%B4%E5%9D%8F%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B/</url>
+    <content><![CDATA[<p><img src="/images/pasted-6.png" alt="upload successful"></p>
+<h1 id="破坏双亲委派模型"><a href="#破坏双亲委派模型" class="headerlink" title="破坏双亲委派模型"></a><strong>破坏双亲委派模型</strong></h1><p>双亲委派主要出现过三次较大规模的“被破坏”的情况。</p>
+<ul>
+<li>JDK1.2之后，为避免<code>loadClass()</code>被子类覆盖的可能，建议用户重写<code>findClass()</code>方法；</li>
+<li>JNDI作为java的标准服务，需要调用启动类加载器不认识的外部接口（其他厂商实现的）；</li>
+<li>IBM公司OSGI实现模块化热部署的关键是自定义类加载器机制，更换Bundle（程序模块）时，类加载器也会被换掉，然而类加载机制与双亲委派机制不同。</li>
+</ul>
+<h2 id="第一种情况"><a href="#第一种情况" class="headerlink" title="第一种情况"></a>第一种情况</h2><ul>
+<li>问题：类加载器的概念和抽象类的概念在java的第一个版本中就出现了，但是在jdk1.2及以前并没有双亲委派机制，所以当java设计者想要引入双亲委派机制时就不得不做出一点妥协，包含兼容用户自己自己的代码（用户自定义类加载器的代码），无法再以技术手段避免loadClass()被子类覆盖的可能性。</li>
+<li>解决：java设计者想出的办法是在java.lang.ClassLoader()中添加一个新的protected方法findClass()，并引导用户编写类加载逻辑时尽可能去重=写这个方法，而不是在loadClass中编写代码。</li>
+</ul>
+<p>loadClass()：先检查请求加载的类型是否已经被加载过，若没有则调用父加载器的loadClassQ方法，若父加载器为空则默认使用启动类加载器作为父加载器。假如父类加载器加载失败，抛出 ClassNotFoundException异常的话，才调用自己的findClass()方法尝试进行加载。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">synchronized</span> Classc&lt;?&gt; 1oadClass(String name，<span class="keyword">boolean</span> resolve) <span class="keyword">throw</span></span><br><span class="line">classNotFoundException&#123;</span><br><span class="line">	<span class="comment">//首先，检查请求的类是否已经被加载过了</span></span><br><span class="line">    Class c = findLoadedclass(name);</span><br><span class="line">    <span class="keyword">if</span> (c == <span class="keyword">null</span>)&#123;</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">		<span class="keyword">if</span> (parent != <span class="keyword">null</span>) &#123;</span><br><span class="line">				c = parent.loadClass(name,<span class="keyword">false</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				c = findBootstrapClassOrNull(name);</span><br><span class="line">        &#125;</span><br><span class="line">		&#125;<span class="keyword">catch</span> (ClassNotFoundException e)&#123;</span><br><span class="line">		<span class="comment">//如果父类加载器抛出classNotFoundException</span></span><br><span class="line">		<span class="comment">//说明父类加载器无法完成加载请求</span></span><br><span class="line">        &#125;</span><br><span class="line">		<span class="keyword">if</span> (c == <span class="keyword">null</span>）&#123;</span><br><span class="line">		<span class="comment">//在父类加载器无法加载时</span></span><br><span class="line">		<span class="comment">//再调用本身的findclass方法来进行类加载c = findclass (name);</span></span><br><span class="line">    &#125;</span><br><span class="line">	<span class="keyword">if</span> (resolve) &#123;</span><br><span class="line">        resolveClass(c);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> c;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="第二种情况"><a href="#第二种情况" class="headerlink" title="第二种情况"></a>第二种情况</h2><ul>
+<li>问题：JNDI服务是java的标准服务，其代码是由启动类加载器加载的，属于非常基础的类型，然而JNDI的目的就会为了查找资源并对其集中管理，需要调用由其他应用厂商实现并部署 JDNI 服务提供者接口代码，所以会出现类加载器不认识和加载这些代码。</li>
+<li>解决：引入线程上下文类加载器，JNDI使用这个类加载器去加载所需的SPI服务代码，这是一种父类加载器请求子类加载器完成类加载的行为，打破了双亲委派模型的层次结构来逆向使用类加载器，即违背了双亲委派模型的一般原则。</li>
+</ul>
+<p><a href="https://www.jianshu.com/p/3a3edbcd8f24">什么是SPI？</a></p>
+<h2 id="第三种情况"><a href="#第三种情况" class="headerlink" title="第三种情况"></a>第三种情况</h2><p><img src="/images/OSGi_Alliance_Logo.png" alt="OSGi_Alliance_Logo.png"></p>
+<ul>
+<li>问题：用户对程序动态性的追求导致的，“动态性”指的是：代码热替换、模块化热部署。这种情况下，例如OSGi实现模块化热部署的关键是它自定义的类加载器机制的实现，每个程序模块（Bundle）都有自己的类加载器，更换一个Bundle就得替换类加载器以实现代码的热替换。</li>
+<li>OSGi环境下，类加载器不再使用双亲委派机制，而是使用更加复杂的网状结构。OSGi类加载搜索过程如下，</li>
+</ul>
+<blockquote>
+<ol>
+<li>将以java.*开头的类，委派给父类加载器加载。         // 符合双亲委派机制</li>
+<li>否则，将委派列表名单内的类，委派给父类加载器加载。// 符合双亲委派机制</li>
+<li>否则，将Import列表中的类，委派给Export这个类的 Bundle的类加载器加载。// 不符合，下同</li>
+<li>否则,查找当前Bundle的 ClassPath，使用自己的类加载器加载。</li>
+<li>否则,查找类是否在自己的Fragment Bundle中，如果在，则委派给Fragment Bundle的类加载器加载。</li>
+<li>否则，查找 Dynamic Import列表的 Bundle，委派给对应 Bundle的类加载器加载。</li>
+<li>否则，类查找失败。</li>
+</ol>
+</blockquote>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>类加载机制</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>管程</title>
+    <url>/2021/08/28/%E7%AE%A1%E7%A8%8B/</url>
+    <content><![CDATA[<h2 id="管程的定义"><a href="#管程的定义" class="headerlink" title="管程的定义"></a>管程的定义</h2><ul>
+<li>系统中的各种硬件资源和软件资源均可用数据结构抽象地描述其资源特性，即用少量信息和对该资源所执行的操作来表征该资源，而忽略它们的内部结构和实现细节。因此，可以利用共享数据结构抽象地表示系统中的共享资源，并且将对该共享数据结构实施的特定操作定义为一组过程。进程对共享资源的申请、释放和其它操作必须通过这组过程，间接地对共享数据结构实现操作。对于请求访问共享资源的诸多并发进程，可以根据资源的情况接受或阻塞，确保每次仅有一个进程进入管程，执行这组过程，使用共享资源，达到对共享资源所有访问的统一管理,有效地实现进程互斥。</li>
+<li>代表共享资源的数据结构以及由对该共享数据结构实施操作的一组过程所组成的资源管理程序共同构成了一个操作系统的资源管理模块，我们称之为管程，管程被请求和释放资源的进程所调用。<blockquote>
+<p>Hansan为管程所下的定义是：“一个管程定义了一个数据结构和能为并发进程所执行(在该数据结构上)的一组操作，这组操作能同步进程和改变管程中的数据。”</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="管程的组成"><a href="#管程的组成" class="headerlink" title="管程的组成"></a>管程的组成</h2><p>由上述的定义可知，管程由四部分组成：</p>
+<ol>
+<li>管程的名称;</li>
+<li>局部于管程的共享数据结构说明;</li>
+<li>对该数据结构进行操作的一组过程;</li>
+<li>对局部于管程的共享数据设置初始值的语句。</li>
+</ol>
+<p><img src="/images/%E7%AE%A1%E7%A8%8B.gif" alt="管程结构"></p>
+<p>实际上，管程中包含了面向对象的思想，它将表征共享资源的数据结构及其对数据结构操作的一组过程，包括同步机制，都集中并封装在一个对象内部，隐藏了实现细节。封装于管程内部的数据结构仅能被封装于管程内部的过程所访问，任何管程外的过程都不能访问它;反之，封装于管程内部的过程也仅能访问管程内的数据结构。所有进程要访问临界资源时，都只能通过管程间接访问，而管程每次只准许一个进程进入管程，执行管程内的过程，从而实现了进程互斥。</p>
+<h2 id="管程的特性"><a href="#管程的特性" class="headerlink" title="管程的特性"></a>管程的特性</h2><p>管程是一种程序设计语言的结构成分，它和信号量有同等的表达能力，从语言的角度看，管程主要有以下特性</p>
+<ul>
+<li>模块化，即管程是一个基本程序单位，可以单独编译;</li>
+<li>抽象数据类型，指管程中不仅有数据，而且有对数据的操作；</li>
+<li>信息屏蔽，指管程中的数据结构只能被管程中的过程访问，这些过程也是在管程内部定义的，供管程外的进程调用，而管程中的数据结构以及过程(函数)的具体实现外部不可见。</li>
+</ul>
+<h2 id="管程和进程的比较"><a href="#管程和进程的比较" class="headerlink" title="管程和进程的比较"></a>管程和进程的比较</h2><ol>
+<li>虽然二者都定义了数据结构，但进程定义的是私有数据结构PCB，管程定义的是公共数据结构，如消息队列等;</li>
+<li>二者都存在对各自数据结构上的操作，但进程是由顺序程序执行有关操作，而管程主要是进行同步操作和初始化操作；</li>
+<li>设置进程的目的在于实现系统的并发性，而管程的设置则是解决共享资源的互斥使用问题;</li>
+<li>进程通过调用管程中的过程对共享数据结构实行操作，该过程就如通常的子程序一样被调用，因而管程为被动工作方式，进程则为主动工作方式;</li>
+<li>进程之间能并发执行，而管程则不能与其调用者并发;</li>
+<li>进程具有动态性，由“创建”而诞生，由“撤消”而消亡，而管程则是操作系统中的一个资源管理模块，供进程调用。</li>
+</ol>
+<h2 id="为什么使用管程？"><a href="#为什么使用管程？" class="headerlink" title="为什么使用管程？"></a>为什么使用管程？</h2><p>信号量机制是一种进程同步机制，但每个要访问临界资源的进程都必须自备同步操作wait(S)和signal(S)。这样大量同步操作分散到各个进程中，可能会导致系统管理问题和死锁，在解决上述问题的过程中，便产生了新的进程同步工具——管程。</p>
+]]></content>
+      <categories>
+        <category>操作系统</category>
+      </categories>
+      <tags>
+        <tag>管程</tag>
       </tags>
   </entry>
   <entry>
@@ -386,48 +507,6 @@
       <tags>
         <tag>线程</tag>
         <tag>进程</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>管程</title>
-    <url>/2021/08/28/%E7%AE%A1%E7%A8%8B/</url>
-    <content><![CDATA[<h2 id="管程的定义"><a href="#管程的定义" class="headerlink" title="管程的定义"></a>管程的定义</h2><ul>
-<li>系统中的各种硬件资源和软件资源均可用数据结构抽象地描述其资源特性，即用少量信息和对该资源所执行的操作来表征该资源，而忽略它们的内部结构和实现细节。因此，可以利用共享数据结构抽象地表示系统中的共享资源，并且将对该共享数据结构实施的特定操作定义为一组过程。进程对共享资源的申请、释放和其它操作必须通过这组过程，间接地对共享数据结构实现操作。对于请求访问共享资源的诸多并发进程，可以根据资源的情况接受或阻塞，确保每次仅有一个进程进入管程，执行这组过程，使用共享资源，达到对共享资源所有访问的统一管理,有效地实现进程互斥。</li>
-<li>代表共享资源的数据结构以及由对该共享数据结构实施操作的一组过程所组成的资源管理程序共同构成了一个操作系统的资源管理模块，我们称之为管程，管程被请求和释放资源的进程所调用。<blockquote>
-<p>Hansan为管程所下的定义是：“一个管程定义了一个数据结构和能为并发进程所执行(在该数据结构上)的一组操作，这组操作能同步进程和改变管程中的数据。”</p>
-</blockquote>
-</li>
-</ul>
-<h2 id="管程的组成"><a href="#管程的组成" class="headerlink" title="管程的组成"></a>管程的组成</h2><p>由上述的定义可知，管程由四部分组成：</p>
-<ol>
-<li>管程的名称;</li>
-<li>局部于管程的共享数据结构说明;</li>
-<li>对该数据结构进行操作的一组过程;</li>
-<li>对局部于管程的共享数据设置初始值的语句。</li>
-</ol>
-<p><img src="/images/%E7%AE%A1%E7%A8%8B.gif" alt="管程结构"></p>
-<p>实际上，管程中包含了面向对象的思想，它将表征共享资源的数据结构及其对数据结构操作的一组过程，包括同步机制，都集中并封装在一个对象内部，隐藏了实现细节。封装于管程内部的数据结构仅能被封装于管程内部的过程所访问，任何管程外的过程都不能访问它;反之，封装于管程内部的过程也仅能访问管程内的数据结构。所有进程要访问临界资源时，都只能通过管程间接访问，而管程每次只准许一个进程进入管程，执行管程内的过程，从而实现了进程互斥。</p>
-<h2 id="管程的特性"><a href="#管程的特性" class="headerlink" title="管程的特性"></a>管程的特性</h2><p>管程是一种程序设计语言的结构成分，它和信号量有同等的表达能力，从语言的角度看，管程主要有以下特性</p>
-<ul>
-<li>模块化，即管程是一个基本程序单位，可以单独编译;</li>
-<li>抽象数据类型，指管程中不仅有数据，而且有对数据的操作；</li>
-<li>信息屏蔽，指管程中的数据结构只能被管程中的过程访问，这些过程也是在管程内部定义的，供管程外的进程调用，而管程中的数据结构以及过程(函数)的具体实现外部不可见。</li>
-</ul>
-<h2 id="管程和进程的比较"><a href="#管程和进程的比较" class="headerlink" title="管程和进程的比较"></a>管程和进程的比较</h2><ol>
-<li>虽然二者都定义了数据结构，但进程定义的是私有数据结构PCB，管程定义的是公共数据结构，如消息队列等;</li>
-<li>二者都存在对各自数据结构上的操作，但进程是由顺序程序执行有关操作，而管程主要是进行同步操作和初始化操作；</li>
-<li>设置进程的目的在于实现系统的并发性，而管程的设置则是解决共享资源的互斥使用问题;</li>
-<li>进程通过调用管程中的过程对共享数据结构实行操作，该过程就如通常的子程序一样被调用，因而管程为被动工作方式，进程则为主动工作方式;</li>
-<li>进程之间能并发执行，而管程则不能与其调用者并发;</li>
-<li>进程具有动态性，由“创建”而诞生，由“撤消”而消亡，而管程则是操作系统中的一个资源管理模块，供进程调用。</li>
-</ol>
-<h2 id="为什么使用管程？"><a href="#为什么使用管程？" class="headerlink" title="为什么使用管程？"></a>为什么使用管程？</h2><p>信号量机制是一种进程同步机制，但每个要访问临界资源的进程都必须自备同步操作wait(S)和signal(S)。这样大量同步操作分散到各个进程中，可能会导致系统管理问题和死锁，在解决上述问题的过程中，便产生了新的进程同步工具——管程。</p>
-]]></content>
-      <categories>
-        <category>操作系统</category>
-      </categories>
-      <tags>
-        <tag>管程</tag>
       </tags>
   </entry>
   <entry>
@@ -498,20 +577,6 @@
 ]]></content>
       <categories>
         <category>操作系统</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>一次编辑</title>
-    <url>/2021/08/29/%E4%B8%80%E6%AC%A1%E7%BC%96%E8%BE%91/</url>
-    <content><![CDATA[<p>字符串有三种编辑操作:插入一个字符、删除一个字符或者替换一个字符。 给定两个字符串，编写一个函数判定它们是否只需要一次(或者零次)编辑。</p>
-<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">示例 1:</span><br><span class="line"></span><br><span class="line">输入: </span><br><span class="line">first = &quot;pale&quot;</span><br><span class="line">second = &quot;ple&quot;</span><br><span class="line">输出: True</span><br><span class="line"> </span><br><span class="line"></span><br><span class="line">示例 2:</span><br><span class="line"></span><br><span class="line">输入: </span><br><span class="line">first = &quot;pales&quot;</span><br><span class="line">second = &quot;pal&quot;</span><br><span class="line">输出: False</span><br></pre></td></tr></table></figure>
-<p>题解：长度相差1以上，就直接返回false，然后双指针向前移动，遇见不同，俩字符串长度长的或长度一样的指针向前移动，并且结束循环，最后比较剩余的字符串是否一样。</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">oneEditAway</span><span class="params">(String first, String second)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> firstLen = first.length();</span><br><span class="line">        <span class="keyword">int</span> secondLen = second.length();</span><br><span class="line">        <span class="keyword">if</span>(Math.abs(firstLen - secondLen) &gt; <span class="number">1</span>)&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> j = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">while</span>(i &lt; firstLen &amp;&amp; j &lt; secondLen)&#123;</span><br><span class="line">            <span class="keyword">char</span> a = first.charAt(i);</span><br><span class="line">            <span class="keyword">char</span> b = second.charAt(j);</span><br><span class="line">            <span class="keyword">if</span>(a != b)&#123;</span><br><span class="line">                <span class="keyword">if</span>(firstLen &gt; secondLen)&#123;</span><br><span class="line">                    i++;</span><br><span class="line">                &#125;<span class="keyword">else</span> <span class="keyword">if</span>(firstLen &lt; secondLen)&#123;</span><br><span class="line">                    j++;</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    i++;</span><br><span class="line">                    j++;</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            i++;</span><br><span class="line">            j++;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(i == firstLen || j == secondLen)<span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">return</span> first.substring(i,firstLen).equals(second.substring(j,secondLen));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/one-away-lcci">https://leetcode-cn.com/problems/one-away-lcci</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
-]]></content>
-      <categories>
-        <category>算法</category>
       </categories>
   </entry>
 </search>
