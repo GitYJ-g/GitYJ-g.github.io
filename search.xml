@@ -724,4 +724,308 @@
         <category>操作系统</category>
       </categories>
   </entry>
+  <entry>
+    <title>JDBC破坏双亲委派机制--源码解析</title>
+    <url>/2021/09/01/pohuai/</url>
+    <content><![CDATA[<h1 id="JDBC破坏双亲委派机制"><a href="#JDBC破坏双亲委派机制" class="headerlink" title="JDBC破坏双亲委派机制"></a>JDBC破坏双亲委派机制</h1><p>java有自己的一套 资源管理服务JNDI 等等，是由启动类加载器加载的，说明类是放在<code>rt.jar</code>包中。java提供Driver接口，厂商根据自己的需求实现功能。</p>
+<p>双亲委派机制：当前类加载器收到类加载的请求后，先不自己尝试加载类，而是先将请求委派给父类加载器，调用父类的 loadClass() 方法，这是一个递归的过程（因此，所有的类加载请求，都会先被传送到启动类加载器），只有当父类加载器加载失败时，当前类加载器才会尝试自己去自己负责的区域加载。</p>
+<p><strong>所以判断是否破坏双亲委派机制的一个重要指标是类加载的请求顺序</strong></p>
+<h2 id="未破坏双亲委派机制的情况"><a href="#未破坏双亲委派机制的情况" class="headerlink" title="未破坏双亲委派机制的情况"></a>未破坏双亲委派机制的情况</h2><p>下面是我们连接数据库常用的代码；</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">String url = <span class="string">&quot;jdbc:mysql://localhost:3306/blog?useUnicode=true&amp;characterEncoding=UTF-8&amp;useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;zeroDateTimeBehavior=CONVERT_TO_NULL&quot;</span>;</span><br><span class="line">String username = <span class="string">&quot;root&quot;</span>;</span><br><span class="line">String password = <span class="string">&quot;root&quot;</span>;</span><br><span class="line">String driverClassName = <span class="string">&quot;com.mysql.cj.jdbc.Driver&quot;</span>;</span><br><span class="line"><span class="comment">// 注册驱动</span></span><br><span class="line">Class.forName(driverClassName);</span><br><span class="line"><span class="comment">// 获取连接</span></span><br><span class="line">Connection connection = DriverManager.getConnection(url, username, password);</span><br><span class="line">System.out.println(<span class="string">&quot;数据库连接成功 --》&quot;</span> + connection);</span><br></pre></td></tr></table></figure>
+
+<p>我们点进java的Driver接口，可以看到：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> java.sql;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.util.logging.Logger;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Driver</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function">Connection <span class="title">connect</span><span class="params">(String url, java.util.Properties info)</span></span></span><br><span class="line"><span class="function">        <span class="keyword">throws</span> SQLException</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">acceptsURL</span><span class="params">(String url)</span> <span class="keyword">throws</span> SQLException</span>;</span><br><span class="line"></span><br><span class="line">    DriverPropertyInfo[] getPropertyInfo(String url, java.util.Properties info)</span><br><span class="line">                         <span class="keyword">throws</span> SQLException;</span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">getMajorVersion</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">int</span> <span class="title">getMinorVersion</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">jdbcCompliant</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Logger <span class="title">getParentLogger</span><span class="params">()</span> <span class="keyword">throws</span> SQLFeatureNotSupportedException</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>所以上面的方法都需要厂商来实现。</p>
+<ul>
+<li>第一步注册驱动，在DriverManager 类中实现</li>
+</ul>
+<p>java 提供了DriverManager来管理各种驱动（Driver），点进看源码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DriverManager</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// List of registered JDBC drivers</span></span><br><span class="line">    <span class="comment">// 存储已经注册的驱动，这是一个由 JUC 下 ReentrantLock 实现的可以高并发的 List ,</span></span><br><span class="line">    <span class="comment">// 如果想要注册驱动，就需要 调用 addIfAbsent 方法添加进 List。</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> CopyOnWriteArrayList&lt;DriverInfo&gt; registeredDrivers = <span class="keyword">new</span> CopyOnWriteArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span>  Object logSync = <span class="keyword">new</span> Object();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="title">DriverManager</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 注册驱动</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">registerDriver</span><span class="params">(java.sql.Driver driver)</span></span></span><br><span class="line"><span class="function">        <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line"></span><br><span class="line">        registerDriver(driver, <span class="keyword">null</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">registerDriver</span><span class="params">(java.sql.Driver driver,</span></span></span><br><span class="line"><span class="params"><span class="function">                                                   DriverAction da)</span></span></span><br><span class="line"><span class="function">        <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 注册驱动</span></span><br><span class="line">        <span class="comment">/* Register the driver if it has not already been added to our list */</span></span><br><span class="line">        <span class="keyword">if</span>(driver != <span class="keyword">null</span>) &#123;</span><br><span class="line">            registeredDrivers.addIfAbsent(<span class="keyword">new</span> DriverInfo(driver, da));</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// This is for compatibility with the original DriverManager</span></span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        println(<span class="string">&quot;registerDriver: &quot;</span> + driver);</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面比较重要的就是 静态代码块 和 CopyOnWriteArrayList 。</p>
+<p>这个时候并没有调用 registerDriver 进行驱动加载，而是 Class.forName() 触发加载MySQL驱动，下面就是MySQL的驱动，其中调用了<code>DriverManager.registerDriver( new Driver() )</code>进行驱动加载</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">package</span> com.mysql.cj.jdbc;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Driver</span> <span class="keyword">extends</span> <span class="title">NonRegisteringDriver</span> <span class="keyword">implements</span> <span class="title">java</span>.<span class="title">sql</span>.<span class="title">Driver</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Driver</span><span class="params">()</span> <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            DriverManager.registerDriver(<span class="keyword">new</span> Driver());</span><br><span class="line">        &#125; <span class="keyword">catch</span> (SQLException var1) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">&quot;Can&#x27;t register driver!&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>第二步，获取连接对象。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> Connection <span class="title">getConnection</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    String url, java.util.Properties info, Class&lt;?&gt; caller)</span> <span class="keyword">throws</span> SQLException </span>&#123;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">    * 代码省略部分，获取类加载器</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 遍历 registeredDrivers List ，通过 密码 和 用户名 连接</span></span><br><span class="line">    <span class="keyword">for</span>(DriverInfo aDriver : registeredDrivers) &#123;</span><br><span class="line">        <span class="comment">// If the caller does not have permission to load the driver then</span></span><br><span class="line">        <span class="comment">// skip it.</span></span><br><span class="line">        <span class="keyword">if</span>(isDriverAllowed(aDriver.driver, callerCL)) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                println(<span class="string">&quot;    trying &quot;</span> + aDriver.driver.getClass().getName());</span><br><span class="line">                Connection con = aDriver.driver.connect(url, info);</span><br><span class="line">                <span class="keyword">if</span> (con != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    <span class="comment">// Success!</span></span><br><span class="line">                    println(<span class="string">&quot;getConnection returning &quot;</span> + aDriver.driver.getClass().getName());</span><br><span class="line">                    <span class="keyword">return</span> (con);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (SQLException ex) &#123;</span><br><span class="line">                <span class="keyword">if</span> (reason == <span class="keyword">null</span>) &#123;</span><br><span class="line">                    reason = ex;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            println(<span class="string">&quot;    skipping: &quot;</span> + aDriver.getClass().getName());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>上述过程并没有破坏双亲委派机制。</li>
+</ul>
+<p><strong>使用的类加载器和 调用类的加载器一样（ ApplicationClassLoader）。</strong></p>
+<h2 id="破坏双亲委派机制的情况"><a href="#破坏双亲委派机制的情况" class="headerlink" title="破坏双亲委派机制的情况"></a>破坏双亲委派机制的情况</h2><p> **JDBC4.0之后使用spi机制才会破坏双亲委派机制 **</p>
+<p>使用 SPI 在<code>META-INF/services/java.sql.Driver</code>寻找实现类 <code>com.mysql.cj.jdbc.Driver</code>，如下图</p>
+<p><img src="https://img-blog.csdnimg.cn/1ed8c8077d0a495e8968857ae1018223.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAU2VlX05VTUI=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="META-INF/services/java.sql.Driver文件"></p>
+<p>所以我们就不需要自己注册驱动了（需要 SPI 服务帮我们注册），连接的过程变为了</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">String url = <span class="string">&quot;jdbc:mysql://localhost:3306/blog?useUnicode=true&amp;characterEncoding=UTF-8&amp;useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;zeroDateTimeBehavior=CONVERT_TO_NULL&quot;</span>;</span><br><span class="line">String username = <span class="string">&quot;root&quot;</span>;</span><br><span class="line">String password = <span class="string">&quot;root&quot;</span>;</span><br><span class="line"></span><br><span class="line">Connection connection = DriverManager.getConnection(url, username, password);</span><br></pre></td></tr></table></figure>
+
+
+
+<p>然而， DriverManager 是位于<code> rt.jar</code>包中的，类加载器是启动类加载器，<code> com.mysql.jdbc.Driver</code>肯定不在 <code>&lt;JAVA_HOME&gt;/lib </code>，那就无法加载MySQL的Driver，我们可以用应用程序类加载器来加载。所以java开发者的设计是，添加一个线程上下文类加载器（Thread Context ClassLoader），在启动类加载器中获取应用程序类加载器。 <strong>Thread.setContextClassLoaser()</strong> 设置线程上下文类加载器，如果创建线程的时候没有设置，会从父类继承一个，默认应用程序类加载器。</p>
+<p><strong>线程上下文类加载器是让父类加载器请求子类加载器完成类的加载，打破了双亲委派机制。</strong></p>
+<p>具体过程，在 DriverManager 的静态代码块对 Driver进行加载：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DriverManager</span> </span>&#123;</span><br><span class="line">    <span class="keyword">static</span> &#123;</span><br><span class="line">        loadInitialDrivers();</span><br><span class="line">        println(<span class="string">&quot;JDBC DriverManager initialized&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">loadInitialDrivers</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//..</span></span><br><span class="line">        </span><br><span class="line">        AccessController.doPrivileged(<span class="keyword">new</span> PrivilegedAction&lt;Void&gt;() &#123;</span><br><span class="line">            <span class="function"><span class="keyword">public</span> Void <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">                ServiceLoader&lt;Driver&gt; loadedDrivers = ServiceLoader.load(Driver.class);</span><br><span class="line">                Iterator&lt;Driver&gt; driversIterator = loadedDrivers.iterator();</span><br><span class="line">                </span><br><span class="line">                <span class="keyword">try</span>&#123;</span><br><span class="line">                    <span class="keyword">while</span>(driversIterator.hasNext()) &#123;</span><br><span class="line">                        driversIterator.next();</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">catch</span>(Throwable t) &#123;</span><br><span class="line">                <span class="comment">// Do nothing</span></span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//..</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中最重要的是SPI 服务，ServiceLoader 查找<code> META-INF/services/java.sql.Driver</code>文件 ，那么我们在下面用driversIterator遍历的时候就会发现文件中的内容，例如，MySQL中的就是一行字符串 <code>com.mysql.cj.jdbc.Driver</code>。</p>
+<p>我们点进<code>ServiceLoader.load() </code>方法查看</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;S&gt; <span class="function">ServiceLoader&lt;S&gt; <span class="title">load</span><span class="params">(Class&lt;S&gt; service)</span> </span>&#123;</span><br><span class="line">    ClassLoader cl = Thread.currentThread().getContextClassLoader();</span><br><span class="line">    <span class="keyword">return</span> ServiceLoader.load(service, cl);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;S&gt; <span class="function">ServiceLoader&lt;S&gt; <span class="title">loadInstalled</span><span class="params">(Class&lt;S&gt; service)</span> </span>&#123;</span><br><span class="line">    ClassLoader cl = ClassLoader.getSystemClassLoader();</span><br><span class="line">    ClassLoader prev = <span class="keyword">null</span>;</span><br><span class="line">    <span class="comment">// 如果创建线程的时候没有设置，会使用父类加载器，上面已经设置，那么这里的类加载器就是线程上下文类加载器</span></span><br><span class="line">    <span class="keyword">while</span> (cl != <span class="keyword">null</span>) &#123;</span><br><span class="line">        prev = cl;</span><br><span class="line">        cl = cl.getParent();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ServiceLoader.load(service, prev);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>出现了我们前面说的内容，<strong>线程上下文类加载器</strong>，说明不符合双亲委派机制了，所以<code>ServiceLoader</code>拿到了 拿到了线程上下文类加载器。</p>
+<p>接着看源码，ServiceLoader 自己实现了 Iterator ，叫 LazyIterator 。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">LazyIterator</span></span></span><br><span class="line"><span class="class">        <span class="keyword">implements</span> <span class="title">Iterator</span>&lt;<span class="title">S</span>&gt;</span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="comment">//..</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">hasNextService</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="comment">//..</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> S <span class="title">nextService</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (!hasNextService())</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> NoSuchElementException();</span><br><span class="line">        <span class="comment">// META-INF/services/java.sql.Driver文件中的内容，即 `com.mysql.cj.jdbc.Driver`</span></span><br><span class="line">        String cn = nextName;</span><br><span class="line">        nextName = <span class="keyword">null</span>;</span><br><span class="line">        Class&lt;?&gt; c = <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 使用线程上下文类加载器加载 实现类(com.mysql.cj.jdbc.Driver)</span></span><br><span class="line">            c = Class.forName(cn, <span class="keyword">false</span>, loader);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (ClassNotFoundException x) &#123;</span><br><span class="line">            fail(service,</span><br><span class="line">                 <span class="string">&quot;Provider &quot;</span> + cn + <span class="string">&quot; not found&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//..</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// hasNext()..调用hasNextService()</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// next()..调用nextService()</span></span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里用代码说明了加载<code>com.mysql.cj.jdbc.Driver</code>驱动的时候是用的线程上下文类加载器。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p> 在 JDBC 4.0以后 ，开始支持使用 SPI 的方式来注册 Driver ， 扫描 <code>META-INF/services/java.sql.Driver</code>文件，使用线程上下文类加载器，破坏了双亲委派机制。</p>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>CopyOnWriteArrayList</title>
+    <url>/2021/09/01/CopyOnWriteArrayList/</url>
+    <content><![CDATA[<h1 id="CopyOnWriteArrayList"><a href="#CopyOnWriteArrayList" class="headerlink" title="CopyOnWriteArrayList"></a>CopyOnWriteArrayList</h1><p><code>CopyOnWriteArrayList</code>类是 JUC 下面的一个并发 List ，适用于对读要求高的场景，因为<code>CopyOnWriteArrayList</code>类读取数据的时候是不加锁的，写入不会阻塞读取操作，只有写与写之间会阻塞，读的性能得到了大幅提升。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CopyOnWriteArrayList</span>&lt;<span class="title">E</span>&gt;</span></span><br><span class="line"><span class="class">    <span class="keyword">implements</span> <span class="title">List</span>&lt;<span class="title">E</span>&gt;, <span class="title">RandomAccess</span>, <span class="title">Cloneable</span>, <span class="title">java</span>.<span class="title">io</span>.<span class="title">Serializable</span> </span>&#123;</span><br><span class="line">    <span class="comment">//..</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>CopyOnWriteArrayList</code>类的读操作代码，是直接返回数组对应位置的值。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">transient</span> <span class="keyword">volatile</span> Object[] array;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> E <span class="title">get</span><span class="params">(<span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> get(getArray(), index);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@SuppressWarnings(&quot;unchecked&quot;)</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> E <span class="title">get</span><span class="params">(Object[] a, <span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (E) a[index];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">final</span> Object[] getArray() &#123;</span><br><span class="line">    <span class="keyword">return</span> array;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>CopyOnWriteArrayList</code>类的写操作代码，使用<code>ReentrantLock</code>加锁避免多个线程写出现问题， 避免多线程写的时候会 copy 出多个副本 。写操作，是将原来数组复制到新的内存区域，进行修改，不直接修改原来的数组，当写操作完成后，就改变指针，使变量数组指向新的内存区域，原来的内存区域就会被回收。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">add</span><span class="params">(<span class="keyword">int</span> index, E element)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">final</span> ReentrantLock lock = <span class="keyword">this</span>.lock;</span><br><span class="line">    lock.lock();</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        Object[] elements = getArray();</span><br><span class="line">        <span class="keyword">int</span> len = elements.length;</span><br><span class="line">        <span class="keyword">if</span> (index &gt; len || index &lt; <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IndexOutOfBoundsException(<span class="string">&quot;Index: &quot;</span>+index+</span><br><span class="line">                                                <span class="string">&quot;, Size: &quot;</span>+len);</span><br><span class="line">        Object[] newElements;</span><br><span class="line">        <span class="keyword">int</span> numMoved = len - index;</span><br><span class="line">        <span class="keyword">if</span> (numMoved == <span class="number">0</span>)</span><br><span class="line">            newElements = Arrays.copyOf(elements, len + <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            newElements = <span class="keyword">new</span> Object[len + <span class="number">1</span>];</span><br><span class="line">            System.arraycopy(elements, <span class="number">0</span>, newElements, <span class="number">0</span>, index);</span><br><span class="line">            System.arraycopy(elements, index, newElements, index + <span class="number">1</span>,</span><br><span class="line">                             numMoved);</span><br><span class="line">        &#125;</span><br><span class="line">        newElements[index] = element;</span><br><span class="line">        setArray(newElements);</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        lock.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>长度最小的子数组</title>
+    <url>/2021/09/01/%E9%95%BF%E5%BA%A6%E6%9C%80%E5%B0%8F%E7%9A%84%E5%AD%90%E6%95%B0%E7%BB%84/</url>
+    <content><![CDATA[<p>给定一个含有 n 个正整数的数组和一个正整数 target 。</p>
+<p>找出该数组中满足其和 ≥ target 的长度最小的 连续子数组 [numsl, numsl+1, …, numsr-1, numsr] ，并返回其长度。如果不存在符合条件的子数组，返回 0 。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line">示例 <span class="number">1</span>：</span><br><span class="line"></span><br><span class="line">输入：target = <span class="number">7</span>, nums = [<span class="number">2</span>,<span class="number">3</span>,<span class="number">1</span>,<span class="number">2</span>,<span class="number">4</span>,<span class="number">3</span>]</span><br><span class="line">输出：<span class="number">2</span></span><br><span class="line">解释：子数组 [<span class="number">4</span>,<span class="number">3</span>] 是该条件下的长度最小的子数组。</span><br><span class="line">示例 <span class="number">2</span>：</span><br><span class="line"></span><br><span class="line">输入：target = <span class="number">4</span>, nums = [<span class="number">1</span>,<span class="number">4</span>,<span class="number">4</span>]</span><br><span class="line">输出：<span class="number">1</span></span><br><span class="line">示例 <span class="number">3</span>：</span><br><span class="line"></span><br><span class="line">输入：target = <span class="number">11</span>, nums = [<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>,<span class="number">1</span>]</span><br><span class="line">输出：<span class="number">0</span></span><br><span class="line"> </span><br><span class="line">提示：</span><br><span class="line"></span><br><span class="line"><span class="number">1</span> &lt;= target &lt;= <span class="number">109</span></span><br><span class="line"><span class="number">1</span> &lt;= nums.length &lt;= <span class="number">105</span></span><br><span class="line"><span class="number">1</span> &lt;= nums[i] &lt;= <span class="number">105</span></span><br><span class="line"> </span><br><span class="line">进阶：</span><br><span class="line"></span><br><span class="line">如果你已经实现 O(n) 时间复杂度的解法, 请尝试设计一个 O(<span class="function">n <span class="title">log</span><span class="params">(n)</span>) 时间复杂度的解法。</span></span><br></pre></td></tr></table></figure>
+
+<p>题解：滑动窗口，双指针。后指针移动，当和大于target的时候，前指针移动寻找最小的窗口。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">minSubArrayLen</span><span class="params">(<span class="keyword">int</span> s, <span class="keyword">int</span>[] nums)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> sum = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> len = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; nums.length; j++) &#123;</span><br><span class="line">            sum += nums[j];</span><br><span class="line">            <span class="keyword">while</span> (sum &gt;= s) &#123;</span><br><span class="line">                len = len == <span class="number">0</span> ? j - i + <span class="number">1</span> : Math.min(len, j - i + <span class="number">1</span>);</span><br><span class="line">                sum -= nums[i++];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> len;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/minimum-size-subarray-sum">https://leetcode-cn.com/problems/minimum-size-subarray-sum</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+]]></content>
+      <tags>
+        <tag>数组</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>无重复字符的最长子串</title>
+    <url>/2021/09/02/%E6%97%A0%E9%87%8D%E5%A4%8D%E5%AD%97%E7%AC%A6%E7%9A%84%E6%9C%80%E9%95%BF%E5%AD%90%E4%B8%B2/</url>
+    <content><![CDATA[<p>给定一个字符串 s ，请你找出其中不含有重复字符的 最长子串 的长度。</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">示例 1:</span><br><span class="line"></span><br><span class="line">输入: s = &quot;abcabcbb&quot;</span><br><span class="line">输出: 3 </span><br><span class="line">解释: 因为无重复字符的最长子串是 &quot;abc&quot;，所以其长度为 3。</span><br><span class="line">示例 2:</span><br><span class="line"></span><br><span class="line">输入: s = &quot;bbbbb&quot;</span><br><span class="line">输出: 1</span><br><span class="line">解释: 因为无重复字符的最长子串是 &quot;b&quot;，所以其长度为 1。</span><br><span class="line">示例 3:</span><br><span class="line"></span><br><span class="line">输入: s = &quot;pwwkew&quot;</span><br><span class="line">输出: 3</span><br><span class="line">解释: 因为无重复字符的最长子串是 &quot;wke&quot;，所以其长度为 3。</span><br><span class="line">     请注意，你的答案必须是 子串 的长度，&quot;pwke&quot; 是一个子序列，不是子串。</span><br><span class="line">示例 4:</span><br><span class="line"></span><br><span class="line">输入: s = &quot;&quot;</span><br><span class="line">输出: 0</span><br><span class="line"> </span><br><span class="line"></span><br><span class="line">提示：</span><br><span class="line"></span><br><span class="line">0 &lt;= s.length &lt;= 5 * 104</span><br><span class="line">s 由英文字母、数字、符号和空格组成</span><br></pre></td></tr></table></figure>
+<p>题解：双指针，左指针指向无重复字符的第一个字母，右指针向后移动，并用数组映射字母的位置，右指针向前移动一次，该字母的位置更新一遍，每次移动右指针减左指针得出子串长度。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Solution</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">lengthOfLongestSubstring</span><span class="params">(String s)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> maxLen = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> left = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span>[] chPos = <span class="keyword">new</span> <span class="keyword">int</span>[<span class="number">128</span>];</span><br><span class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>;i &lt; s.length();i++)&#123;</span><br><span class="line">            left = Math.max(chPos[s.charAt(i)], left);</span><br><span class="line">            maxLen = Math.max(maxLen, i - left + <span class="number">1</span>);</span><br><span class="line">            chPos[s.charAt(i)] = i + <span class="number">1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> maxLen;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>来源：力扣（LeetCode）<br>链接：<a href="https://leetcode-cn.com/problems/longest-substring-without-repeating-characters">https://leetcode-cn.com/problems/longest-substring-without-repeating-characters</a><br>著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。</p>
+]]></content>
+      <categories>
+        <category>算法</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>适配器模式</title>
+    <url>/2021/09/03/%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F/</url>
+    <content><![CDATA[<h3 id="适配器模式"><a href="#适配器模式" class="headerlink" title="适配器模式"></a>适配器模式</h3><p> 适配器模式将某个类的接口转换成客户端期望的另一个接口表示，目的是消除由于接口不匹配所造成的类的兼容性问题。主要分为三类：类的适配器模式、对象的适配器模式、接口的适配器模式。</p>
+<h4 id="类的适配器模式"><a href="#类的适配器模式" class="headerlink" title="类的适配器模式"></a>类的适配器模式</h4><p>核心思想就是：有一个Source类，拥有一个方法，待适配，目标接口是Targetable，通过Adapter类，将Source的功能扩展到Targetable里，看代码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Source</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method1</span><span class="params">()</span></span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot; original method&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Targetable</span></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">method1</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">method2</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Adapter</span> <span class="keyword">extends</span> <span class="title">Source</span> <span class="keyword">implements</span> <span class="title">Targetable</span></span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot; targetable method&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Adapter类继承Source类，实现Targetable接口，下面是测试类：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AdapterTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Adapter adapter = <span class="keyword">new</span> Adapter();</span><br><span class="line">        adapter.method1();</span><br><span class="line">        adapter.method2();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">original method</span><br><span class="line">targetable method</span><br></pre></td></tr></table></figure>
+
+<p>Targetable接口的实现类（Adapter）就具有了Source类的功能。</p>
+<h4 id="对象的适配器模式"><a href="#对象的适配器模式" class="headerlink" title="对象的适配器模式**"></a>对象的适配器模式**</h4><p>基本思路和类的适配器模式相同，只是将Adapter类作修改，这次不继承Source类，而是持有Source类的实例，以达到解决兼容性的问题。让Targetable的实现类具有Source 类的功能</p>
+<p>只需要修改Adapter类的源码即可：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Wrapper</span> <span class="keyword">implements</span> <span class="title">Targetable</span></span>&#123;</span><br><span class="line">    <span class="keyword">private</span> Source source;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Wrapper</span><span class="params">(Source source)</span></span>&#123;</span><br><span class="line">        <span class="keyword">super</span>();</span><br><span class="line">        <span class="keyword">this</span>.source = source;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method1</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        source.method1();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot; targetable method&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AdapterTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Source source = <span class="keyword">new</span> Source();</span><br><span class="line">        Wrapper wrapper = <span class="keyword">new</span> Wrapper(source);</span><br><span class="line">        wrapper.method1();</span><br><span class="line">        wrapper.method2();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出与第一种一样，只是适配的方法不同而已。</p>
+<h4 id="接口的适配器模式"><a href="#接口的适配器模式" class="headerlink" title="接口的适配器模式"></a>接口的适配器模式</h4><p>有时我们需要的接口实现类并不需要实现所有的方法，可以使用抽象类实现接口，再与抽象类关联，这样就不用全部实现了，不用与接口打交道，我们需要做的就是继承抽象类，重写方法。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Sourceable</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">method1</span><span class="params">()</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">method2</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>抽象类Wrapper2：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">Wrapper2</span> <span class="keyword">implements</span> <span class="title">Sourceable</span></span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method1</span><span class="params">()</span></span>&#123;&#125;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method2</span><span class="params">()</span> </span>&#123;&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>子类继承：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SourceSub1</span> <span class="keyword">extends</span> <span class="title">Wrapper2</span></span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method1</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;sourceable interface&#x27;s first Sub1&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SourceSub2</span> <span class="keyword">extends</span> <span class="title">Wrapper2</span></span>&#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method2</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;sourceable interface&#x27;s second Sub2&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>测试：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WrapperTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        SourceSub1 sourceSub1 = <span class="keyword">new</span> SourceSub1();</span><br><span class="line">        SourceSub2 sourceSub2 = <span class="keyword">new</span> SourceSub2();</span><br><span class="line">        sourceSub1.method1();</span><br><span class="line">        sourceSub1.method2();</span><br><span class="line">        sourceSub2.method1();</span><br><span class="line">        sourceSub2.method2();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>测试输出：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">sourceable <span class="class"><span class="keyword">interface</span>&#x27;<span class="title">s</span> <span class="title">first</span> <span class="title">Sub1</span></span></span><br><span class="line"><span class="class"><span class="title">sourceable</span> <span class="title">interface</span>&#x27;<span class="title">s</span> <span class="title">second</span> <span class="title">Sub2</span></span></span><br><span class="line"><span class="class"></span></span><br></pre></td></tr></table></figure>
+
+<p> 这样我们就可以不用实现一些我们不需要的方法了，达到了预期的效果。</p>
+<h2 id="场景"><a href="#场景" class="headerlink" title="场景"></a>场景</h2><p>三种适配器模式的应用场景：</p>
+<p>类的适配器模式：当希望将<strong>一个类</strong>转换成满足<strong>另一个新接口</strong>的类时，可以使用类的适配器模式，创建一个新类，继承原有的类，实现新的接口即可。</p>
+<p>对象的适配器模式：当希望将一个对象转换成满足另一个新接口的对象时，可以创建一个Wrapper类，持有原类的一个实例，在Wrapper类的方法中，调用实例的方法就行。</p>
+<p>接口的适配器模式：使用抽象类实现接口方法，再继承抽象类，这样就不必实现接口中的所有方法了。</p>
+<p>作者：aglice链接：<a href="https://juejin.cn/post/6844903475197771790">https://juejin.cn/post/6844903475197771790</a></p>
+]]></content>
+      <categories>
+        <category>设计模式</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>final、finally、finalize区别</title>
+    <url>/2021/09/03/final%E3%80%81finally%E3%80%81finalize%E5%8C%BA%E5%88%AB/</url>
+    <content><![CDATA[<h1 id="final、finally、finalize区别"><a href="#final、finally、finalize区别" class="headerlink" title="final、finally、finalize区别"></a>final、finally、finalize区别</h1><h2 id="final"><a href="#final" class="headerlink" title="final"></a>final</h2><p>final 关键字可以对类、方法、变量进行修饰。对类进行修饰，表示该类不能继承；对方法进行修饰，表示该方法不能被重写；对变量进行修饰，表示该变量不可变（引用变量不一样）。</p>
+<ul>
+<li>final修饰的类，可以防止API 使用者更改基础功能，比如 String 类是不可变的，如果String不用final修饰，可能就会出现意料之外的错误，这样在某些程度上，可以保证平台的安全。</li>
+<li>使用final修饰参数和变量，让数据不可变，避免后序因为改变数值而造成程序错误，有时，我们建议将所有方法参数、本地变量、成员变量声明成 final 。</li>
+<li>final使数据不可变，所以保证了数据的安全性，在并发的情况下，有利于减少同步开发的消耗， 省去一些防御性拷贝的必要 。</li>
+</ul>
+<blockquote>
+<p> 有些书籍说明，final可能有助于 JVM 将方法进行内联，可以改善编译器进行条件编译的能力等，能够提高 jvm 性能。</p>
+</blockquote>
+<h2 id="特殊情况"><a href="#特殊情况" class="headerlink" title="特殊情况"></a>特殊情况</h2><p><strong>final并不等于 Immutable</strong> </p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">final</span> List&lt;String&gt; list = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">list.add(<span class="string">&quot; HELLO &quot;</span>);</span><br><span class="line">list.add(<span class="string">&quot; WORLD &quot;</span>);</span><br><span class="line">list.forEach(System.out::println);</span><br></pre></td></tr></table></figure>
+
+<p>对于引用对象来说，final 只是保证引用不能改变，即不能改变指针，我们还是可以对位于堆内的对象的行为是不受限制的。所以上面的代码是能够正常运行的。</p>
+<ol>
+<li>将 class 自身声明为 final，这样就不能避开限制。</li>
+<li>将所有成员变量定义为 private 和 final，并且不要实现 setter 方法。</li>
+<li>通常构造对象时，成员变量使用深度拷贝来初始化，而不是直接赋值，这是一种防御措施，因为你无法确定输入对象不被其他人修改。</li>
+<li>如果确实需要实现 getter 方法，或者其他可能会返回内部状态的方法，使用 copy-on-write 原则，创建私有的 copy。 </li>
+</ol>
+<blockquote>
+<p>copy-on-write 目的是保证 只有一个专门的线程往里面写；可以有多个线程读取，这样能保证线程同步； 每次getter访问时，都只会访问到拷贝引用，而不是原始数据引用，这样子就保证getter拿到的东西不会直接被外部修改 。</p>
+</blockquote>
+<p>所以一般不建议使用IDE一键生成 getter/setter。</p>
+<p>为什么匿名内部类，访问局部变量时，局部变量要用final来修饰？</p>
+<p>因为匿名内部类访问局部变量的时候，会复制变量，对副本进行操作，可以防止数据一致性问题。</p>
+<h2 id="finally"><a href="#finally" class="headerlink" title="finally"></a>finally</h2><p>finally 保证代码必定被执行（几种情况除外）的机制，比如，使用 try-finally 或者 try-catch-finally 来进行类似关闭 JDBC 连接、保证 unlock 锁等动作 。</p>
+<p>如果需要关闭连接资源等，建议使用 JDK7 及以后的 try-with-resources ，try-with-resources 能够帮我自动关闭实现了 AutoCloseable 接口的类。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span>&#123;</span><br><span class="line">    System.exit(<span class="number">0</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    e.printStackTrace();</span><br><span class="line">&#125;<span class="keyword">finally</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;finally method&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述代码就是特殊情况之一，finally 并不会执行，不会输出<code>finally method</code>，因为执行<code>System.exit(0);</code>后，程序已经停止运行了。try 中含有 <code>return</code>语句，finally照样执行。</p>
+<p>还有两种情况：</p>
+<ul>
+<li>try 语句中含有死循环；</li>
+<li>当前线程被杀死，finally 中的代码照样不能执行。</li>
+</ul>
+<h2 id="finalize"><a href="#finalize" class="headerlink" title="finalize"></a>finalize</h2><p>finalize 已经明确被不推荐使用了，设计目的是保证对象在被垃圾收集前完成特定资源的回收， JDK 9 开始被标记为 deprecated。 </p>
+<p>在可达性分析算法中，宣告一个对象正真死亡至少需要两次标记，如果 没有发现与 GC Roots 连接的引用链，这是对象会被第一次标记，进行一次筛选，看看对象是否有必要执行 finalize() 方法，（如果对象没有覆盖finalize() 方法，或者虚拟机已经调用过 finalize() 方法，jvm 认为没有必要执行finalize() 方法）。</p>
+<p>如果有必要执行finalize() 方法，则会将 对象放入F-Queue 队列中，稍后虚拟机自动创建一个低调度优先级的线程去执行队列中对象的finalize() 方法（这里说的执行finalize() ，只是触发 finalize() 方法，并不意味着 finalize() 方法一定要执行完毕，所以如果某一个对象的 finalize() 方法执行缓慢或 陷入死循环，可能造成其他对象永久等待，甚至使内存陷入崩溃）。</p>
+<p>第二次标记，如果在收集器对队列中的对象进行标记的时候，有对象重新建立连接，就可以避免被回收，那么该对象将被移除队列，如果没有逃脱，必定会被回收。</p>
+<p><strong>所以对象的finalize() 方法执行，它依然可以存活。</strong></p>
+<p> 你无法保证 finalize 什么时候执行，执行的是否符合预期。使用不当会影响性能，导致程序死锁、挂起等。</p>
+<p>我们完全可以使用 <strong>try-with-resources 或者 try-finally 机制</strong> 替代 finalize() 。</p>
+<p> Java 平台目前在逐步使用 java.lang.ref.Cleaner 来替换掉原有的 finalize 实现。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li><p>final<br>修饰类：不可被继承<br>修饰方法：不可重写<br>修饰变量：不可修改，只能约束引用不可以被再次赋值。匿名内部类访问局部变量时需要使用 final，因为 Innerclass 实际会 copy 一份局部变量，final 可以防止出现数据一致性问题；</p>
+</li>
+<li><p>finally：Java 保证重点代码一定要被执行的机制，try - finally，除非在 finally 前执行了 System.exit（1）、try 中死循环、线程被杀死；</p>
+</li>
+<li><p>finalize：基础类 Object 的一个方法，保证对象在被垃圾收集前完成特定的资源回收。由于 finalize 执行时间不确定且可能造成程序死锁、拖慢垃圾收集等问题，Java 9 中将改方法废弃<br>优化：使用 Cleaner 配合幻想引用。</p>
+</li>
+</ul>
+]]></content>
+  </entry>
+  <entry>
+    <title>java 中 Exception 和 Error</title>
+    <url>/2021/09/03/java-%E4%B8%AD-Exception-%E5%92%8C-Error/</url>
+    <content><![CDATA[<h1 id="java-中-Exception-和-Error"><a href="#java-中-Exception-和-Error" class="headerlink" title="java 中 Exception 和 Error"></a>java 中 Exception 和 Error</h1><p>在java中 Exception 和 Error 都是继承 Throwable ，说明他们是可以被捕获和抛出的。</p>
+<ul>
+<li>Exception 是程序运行时可以预料的情况，并且应该捕获，做出对应处理，例如NullPointerException。</li>
+<li>Error 可能是不常出现的情况，发生Erro 可能导致程序不能正常运行，所以不便于也不建议捕获Error，例如OutOfMemoryError。</li>
+</ul>
+<p>Exception 又分为<strong>可检查和不可检查的</strong>异常。</p>
+<ul>
+<li>不可检查异常，又叫运行时异常（RuntimeException），如NullPointerException （空指针异常）、 IndexOutOfBoundsException （下标越界异常），这种异常通常是由逻辑不严密造成的；</li>
+<li>可检查异常，是除运行时异常之外的异常，也是 Exception 类及其子类，是必须处理的异常，如果不处理，程序就不能编译通过，如  IOException  、 SQLException 和 用户自定义异常等，一般情况下不自定义异常。</li>
+</ul>
+<p><img src="/images/ExceptionAndError.png" alt="ExceptionAndError"></p>
+<blockquote>
+<p>经典面试题， NoClassDefFoundError 和 ClassNotFoundException 有什么区别？</p>
+<p>NoClassDefFoundError 是个Error，是指一个class在编译时存在，在运行时找不到了class文件了；ClassNotFoundException 是个Exception，是使用类似Class.foName()等方法时的checked exception。 </p>
+</blockquote>
+<h2 id="几个建议"><a href="#几个建议" class="headerlink" title="几个建议"></a>几个建议</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123; </span><br><span class="line">    <span class="comment">// 业务代码 </span></span><br><span class="line">    <span class="comment">// … </span></span><br><span class="line">    Thread.sleep(<span class="number">1000L</span>);</span><br><span class="line">&#125; <span class="keyword">catch</span> (Exception e) &#123; </span><br><span class="line">    <span class="comment">// Ignore it</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<ul>
+<li>不要捕获类似 Exception 这样的通用异常，而是捕获特定异常。将异常细化，可以让自己的代码能够只管地展示出更多细节，而不是将所有异常统统拦下隐藏， 我们也要保证程序不会捕获到我们不希望捕获的异常。 </li>
+<li>不要生吞（swallow）异常，即不能 catch 异常的时候没有打印日志，导致我们排查异常十分困难。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">try</span> &#123; </span><br><span class="line">    <span class="comment">// 业务代码 </span></span><br><span class="line">    <span class="comment">// …</span></span><br><span class="line">&#125; <span class="keyword">catch</span> (IOException e) &#123; </span><br><span class="line">    e.printStackTrace();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>不建议使用标准输出，上述代码平常的时候使用没有问题，但是对于分布式系统来说，如果发生异常， 无法找到堆栈轨迹。所以 ，最好使用产品日志，详细地输出到日志系统里 。</li>
+</ul>
+<h2 id="Throw-early-catch-late-原则"><a href="#Throw-early-catch-late-原则" class="headerlink" title="Throw early, catch late 原则"></a>Throw early, catch late 原则</h2><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">readPreferences</span><span class="params">(String fileName)</span></span>&#123; </span><br><span class="line">    <span class="comment">//...perform operations... </span></span><br><span class="line">    InputStream in = <span class="keyword">new</span> FileInputStream(fileName); </span><br><span class="line">    <span class="comment">//...read the preferences file...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果 fileName 是 null ， 程序会抛出 NullPointerException ，不能第一时间知道问题所在，需要复杂的定位。</p>
+<p>加上 NullPointerException 检验，让异常 “ throw early ”.</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function">ublic <span class="keyword">void</span> <span class="title">readPreferences</span><span class="params">(String filename)</span> </span>&#123; </span><br><span class="line">    Objects. requireNonNull(filename); </span><br><span class="line">    <span class="comment">//...perform other operations... </span></span><br><span class="line">    InputStream in = <span class="keyword">new</span> FileInputStream(filename); </span><br><span class="line">    <span class="comment">//...read the preferences file...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如何“ catch late ”，可以自定义异常类抛出。</p>
+<ul>
+<li> try-catch 在性能上有缺陷。</li>
+</ul>
+<ol>
+<li><p>try-catch 代码段会产生额外的性能开销， 它往往会影响 JVM 对代码进行优化，所以建议仅捕获有必要的代码段，尽量不要一个大的 try 包住整段的代码 ；同时， 利用异常控制代码流程，远比我们通常意义上的条件语句（if/else、switch）要低效。</p>
+</li>
+<li><p>Java 每实例化一个 Exception，都会对当时的栈进行快照，这是一个相对比较重的操作。如果发生的非常频繁，这个开销可就不能被忽略了。</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+      <tags>
+        <tag>异常</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Shenandoah 和 ZGC 垃圾回收器</title>
+    <url>/2021/09/03/ZGC/</url>
+    <content><![CDATA[<p>阅读前提：了解G1 等收集器。</p>
+<h1 id="Shenandoah"><a href="#Shenandoah" class="headerlink" title="Shenandoah"></a>Shenandoah</h1><p>前言： Shenandoah 并不是Oracle 官方的收集器，所以 OracleJDK 甚至明确拒绝使用这个高效的垃圾收集器，商用的话可以使用OpenJDK。</p>
+<p>该收集器与 G1 的不同有：</p>
+<ul>
+<li><p>G1的回收阶段是可以多线程并行的，但是不能与用户线程并行，但是Shenandoah 回收阶段是可以与用户线程并发的，使用了转发指针等技术。</p>
+</li>
+<li><p>Shenandoah 默认不使用分代收集，然而G1 是分新生代和老年代这些的，所以没有专门的新生代和老年代的 Region 。</p>
+</li>
+<li><p>G1 消耗大量的内存去维护记忆集， Shenandoah 改用名为“连接矩阵”的全局数据结构来记录跨Region的引用关系降低了处理跨待指针是的记忆集维护消耗。<br><img src="https://img-blog.csdnimg.cn/e077bc7e6d9345ccae562793fb1c92b6.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAU2VlX05VTUI=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+</li>
+<li><p>用户线程和收集器线程对转发指针的访问</p>
+</li>
+<li><p>使用CAS保证两者并发时能够正确访问</p>
+</li>
+</ul>
+<h1 id="ZGC"><a href="#ZGC" class="headerlink" title="ZGC"></a>ZGC</h1><p>ZGC 收集器是一款JDK 11 中新加入的具有实验性质的低延迟垃圾收集器，与Shenandoah 的目标相同，向往尽可能对吞吐量影响不大的前提下，实现在任意任意堆内存可以把垃圾收集停顿限制在十毫秒之内的低延迟。</p>
+<ul>
+<li>不设置分代，使用读屏障、染色指针和内存多重映射实现并发整理算法。</li>
+<li>染色指针就是在指向对象的指针上标记对象的一些信息，如可以在指针（即地址）的某些未使用的位置标志对象是否进入重分配集（是否被移动过）、是否只能通过finalize() 方法访问到、引用对象的三色标记状态。<blockquote>
+<p>所以要直接在指针上标记，需要操作系统的支持，比如Linux 64位指针的高18 位不能用来寻址，剩余的46  位能够寻址 64 TB，显然已经足够大了，所以，可以将剩余46 位 的高4 位标志上述信息。</p>
+</blockquote>
+</li>
+</ul>
+<p><img src="https://img-blog.csdnimg.cn/95f07c778c80459eb34aece9e9a5cd39.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAU2VlX05VTUI=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<ul>
+<li>迄今垃圾收集器研究最前沿的成果，几乎整个回收过程都可以并发收集，短暂的停顿（初始标记和最终标记）只与 GC Roots大小相关而与堆内存大小无关。</li>
+<li>相较于G1，没有使用写屏障</li>
+<li>性能十分高</li>
+</ul>
+]]></content>
+      <categories>
+        <category>java</category>
+      </categories>
+  </entry>
 </search>

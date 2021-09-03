@@ -3,21 +3,26 @@
 <head>
   <meta charset="utf-8">
   
-  <title>category: java | Huffman</title>
+  <title>shenandoah 和 zgc 垃圾回收器 | Huffman</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   
   
   
   
-  <meta name="description" content="QQ: 2724843654">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Huffman">
-<meta property="og:url" content="http://seeyj.top/categories/java/index.html">
+  <meta name="description" content="阅读前提：了解G1 等收集器。 Shenandoah前言： Shenandoah 并不是Oracle 官方的收集器，所以 OracleJDK 甚至明确拒绝使用这个高效的垃圾收集器，商用的话可以使用OpenJDK。 该收集器与 G1 的不同有：  G1的回收阶段是可以多线程并行的，但是不能与用户线程并行，但是Shenandoah 回收阶段是可以与用户线程并发的，使用了转发指针等技术。  Shenan">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Shenandoah 和 ZGC 垃圾回收器">
+<meta property="og:url" content="http://seeyj.top/2021/09/03/ZGC/index.html">
 <meta property="og:site_name" content="Huffman">
-<meta property="og:description" content="QQ: 2724843654">
+<meta property="og:description" content="阅读前提：了解G1 等收集器。 Shenandoah前言： Shenandoah 并不是Oracle 官方的收集器，所以 OracleJDK 甚至明确拒绝使用这个高效的垃圾收集器，商用的话可以使用OpenJDK。 该收集器与 G1 的不同有：  G1的回收阶段是可以多线程并行的，但是不能与用户线程并行，但是Shenandoah 回收阶段是可以与用户线程并发的，使用了转发指针等技术。  Shenan">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/e077bc7e6d9345ccae562793fb1c92b6.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAU2VlX05VTUI=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/95f07c778c80459eb34aece9e9a5cd39.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAU2VlX05VTUI=,size_20,color_FFFFFF,t_70,g_se,x_16">
+<meta property="article:published_time" content="2021-09-03T13:55:00.000Z">
+<meta property="article:modified_time" content="2021-09-03T13:56:44.827Z">
 <meta property="article:author" content="yangjing">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/e077bc7e6d9345ccae562793fb1c92b6.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAU2VlX05VTUI=,size_20,color_FFFFFF,t_70,g_se,x_16">
   
     <link rel="alternate" href="/atom.xml" title="Huffman" type="application/atom+xml">
   
@@ -66,8 +71,6 @@
   
 
   
-    <link rel="stylesheet" href="/css/archive.css" >
-  
   
   
     <link rel="stylesheet" href="/css/vdonate.css" >
@@ -77,7 +80,7 @@
 
 
 
-  <body>
+  <body data-spy="scroll" data-target="#toc" data-offset="50">
 
 
   
@@ -100,7 +103,7 @@
             
               <a class="brand" style="
                  margin-top: 0px;"  
-                 >
+                href="#" data-toggle="modal" data-target="#myModal" >
                   <img width="124px" height="124px" alt="Hike News" src="/css/images/mylogo.jpg">
               </a>
             
@@ -171,237 +174,167 @@
             
       <div id="content" class="outer">
         
-          <section id="main" style="float:none;">
-  
-  
-  
+          <section id="main" style="float:none;"><article id="post-ZGC" style="width: 75%; float:left;" class="article article-type-post" itemscope itemprop="blogPost" >
+  <div id="articleInner" class="article-inner">
     
     
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <h1><a href="/archives/2021" class="archive-year">2021</a></h1>
-        </div>
-        <div class="archives">
+      <header class="article-header">
+        
+  
+    <h1 class="thumb" class="article-title" itemprop="name">
+      Shenandoah 和 ZGC 垃圾回收器
+    </h1>
+  
+
+      </header>
     
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
+    <div class="article-meta">
       
-	<a href="/2021/09/03/ZGC/" class="archive-article-date">
+	<a href="/2021/09/03/ZGC/" class="article-date">
 	  <time datetime="2021-09-03T13:55:00.000Z" itemprop="datePublished">2021-09-03</time>
 	</a>
 
       
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/09/03/ZGC/">Shenandoah 和 ZGC 垃圾回收器</a>
-    </h1>
-  
+    <a class="article-category-link" href="/categories/java/">java</a>
 
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
       
-	<a href="/2021/09/03/java-%E4%B8%AD-Exception-%E5%92%8C-Error/" class="archive-article-date">
-	  <time datetime="2021-09-03T13:50:00.000Z" itemprop="datePublished">2021-09-03</time>
+	<a class="article-views">
+	<span id="busuanzi_container_page_pv">
+		PV:<span id="busuanzi_value_page_pv"></span>
+	</span>
 	</a>
 
       
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/09/03/java-%E4%B8%AD-Exception-%E5%92%8C-Error/">java 中 Exception 和 Error</a>
-    </h1>
-  
 
-    </header>
+    </div>
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>阅读前提：了解G1 等收集器。</p>
+<h1 id="Shenandoah"><a href="#Shenandoah" class="headerlink" title="Shenandoah"></a>Shenandoah</h1><p>前言： Shenandoah 并不是Oracle 官方的收集器，所以 OracleJDK 甚至明确拒绝使用这个高效的垃圾收集器，商用的话可以使用OpenJDK。</p>
+<p>该收集器与 G1 的不同有：</p>
+<ul>
+<li><p>G1的回收阶段是可以多线程并行的，但是不能与用户线程并行，但是Shenandoah 回收阶段是可以与用户线程并发的，使用了转发指针等技术。</p>
+</li>
+<li><p>Shenandoah 默认不使用分代收集，然而G1 是分新生代和老年代这些的，所以没有专门的新生代和老年代的 Region 。</p>
+</li>
+<li><p>G1 消耗大量的内存去维护记忆集， Shenandoah 改用名为“连接矩阵”的全局数据结构来记录跨Region的引用关系降低了处理跨待指针是的记忆集维护消耗。<br><img src="https://img-blog.csdnimg.cn/e077bc7e6d9345ccae562793fb1c92b6.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAU2VlX05VTUI=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+</li>
+<li><p>用户线程和收集器线程对转发指针的访问</p>
+</li>
+<li><p>使用CAS保证两者并发时能够正确访问</p>
+</li>
+</ul>
+<h1 id="ZGC"><a href="#ZGC" class="headerlink" title="ZGC"></a>ZGC</h1><p>ZGC 收集器是一款JDK 11 中新加入的具有实验性质的低延迟垃圾收集器，与Shenandoah 的目标相同，向往尽可能对吞吐量影响不大的前提下，实现在任意任意堆内存可以把垃圾收集停顿限制在十毫秒之内的低延迟。</p>
+<ul>
+<li>不设置分代，使用读屏障、染色指针和内存多重映射实现并发整理算法。</li>
+<li>染色指针就是在指向对象的指针上标记对象的一些信息，如可以在指针（即地址）的某些未使用的位置标志对象是否进入重分配集（是否被移动过）、是否只能通过finalize() 方法访问到、引用对象的三色标记状态。<blockquote>
+<p>所以要直接在指针上标记，需要操作系统的支持，比如Linux 64位指针的高18 位不能用来寻址，剩余的46  位能够寻址 64 TB，显然已经足够大了，所以，可以将剩余46 位 的高4 位标志上述信息。</p>
+</blockquote>
+</li>
+</ul>
+<p><img src="https://img-blog.csdnimg.cn/95f07c778c80459eb34aece9e9a5cd39.png?x-oss-process=image/watermark,type_ZHJvaWRzYW5zZmFsbGJhY2s,shadow_50,text_Q1NETiBAU2VlX05VTUI=,size_20,color_FFFFFF,t_70,g_se,x_16" alt="在这里插入图片描述"></p>
+<ul>
+<li>迄今垃圾收集器研究最前沿的成果，几乎整个回收过程都可以并发收集，短暂的停顿（初始标记和最终标记）只与 GC Roots大小相关而与堆内存大小无关。</li>
+<li>相较于G1，没有使用写屏障</li>
+<li>性能十分高</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      
+        <div id="donation_div"></div>
+
+
+<script src="/js/vdonate.js"></script>
+
+<script>
+var a = new Donate({
+  title: '如果觉得我的文章对您有用，请随意打赏。您的支持将鼓励我继续创作!', // 可选参数，打赏标题
+  btnText: 'Donate', // 可选参数，打赏按钮文字
+  el: document.getElementById('donation_div'),
+  wechatImage: 'https://shanghai-bucket-image.oss-cn-shanghai.aliyuncs.com/image/blog/WeChatPayPicture.png',
+  alipayImage: 'https://shanghai-bucket-image.oss-cn-shanghai.aliyuncs.com/image/blog/AlipayPicture.jpg'
+});
+</script>
+      
+      
+      <div>
+        <ul class="post-copyright">
+          <li class="post-copyright-author">
+          <strong>Post author:  </strong>yangjing</a>
+          </li>
+          <li class="post-copyright-link">
+          <strong>Post link:  </strong>
+          <a href="/2021/09/03/ZGC/" target="_blank" title="Shenandoah 和 ZGC 垃圾回收器">http://seeyj.top/2021/09/03/ZGC/</a>
+          </li>
+          <li class="post-copyright-license">
+            <strong>Copyright Notice:   </strong>
+            All articles in this blog are licensed under <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" title="Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)">CC BY-NC-ND 4.0</a>
+            unless stating additionally.
+          </li>
+         
+        </ul>
+<div>
+
+      
+      
+        
+	<div id="comment">
+		<!-- 来必力City版安装代码 -->
+		<div id="lv-container" data-id="city" data-uid="MTAyMC8yOTQ4MS82MDQ5">
+		<script type="text/javascript">
+		   (function(d, s) {
+		       var j, e = d.getElementsByTagName(s)[0];
+
+		       if (typeof LivereTower === 'function') { return; }
+
+		       j = d.createElement(s);
+		       j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+		       j.async = true;
+
+		       e.parentNode.insertBefore(j, e);
+		   })(document, 'script');
+		</script>
+		<noscript>为正常使用来必力评论功能请激活JavaScript</noscript>
+		</div>
+		<!-- City版安装代码已完成 -->
+	</div>
+
+
+
+      
+      
+        
+      
+
+    </footer>
   </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2021/09/03/final%E3%80%81finally%E3%80%81finalize%E5%8C%BA%E5%88%AB/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">final、finally、finalize区别</div>
+    </a>
+  
+</nav>
+
+  
 </article>
-  
+
+<!-- Table of Contents -->
+
+  <aside id="toc-sidebar">
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">Contents</strong>
     
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Shenandoah"><span class="nav-number">1.</span> <span class="nav-text">Shenandoah</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ZGC"><span class="nav-number">2.</span> <span class="nav-text">ZGC</span></a></li></ol>
     
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      
-	<a href="/2021/09/01/CopyOnWriteArrayList/" class="archive-article-date">
-	  <time datetime="2021-09-01T12:22:00.000Z" itemprop="datePublished">2021-09-01</time>
-	</a>
-
-      
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/09/01/CopyOnWriteArrayList/">CopyOnWriteArrayList</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      
-	<a href="/2021/09/01/pohuai/" class="archive-article-date">
-	  <time datetime="2021-09-01T11:09:00.000Z" itemprop="datePublished">2021-09-01</time>
-	</a>
-
-      
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/09/01/pohuai/">JDBC破坏双亲委派机制--源码解析</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      
-	<a href="/2021/08/31/%E5%9C%A8JDBC%E4%B8%AD%E5%8F%91%E7%8E%B0SPI%E6%9C%8D%E5%8A%A1/" class="archive-article-date">
-	  <time datetime="2021-08-31T13:48:00.000Z" itemprop="datePublished">2021-08-31</time>
-	</a>
-
-      
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/08/31/%E5%9C%A8JDBC%E4%B8%AD%E5%8F%91%E7%8E%B0SPI%E6%9C%8D%E5%8A%A1/">在JDBC中发现SPI服务</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      
-	<a href="/2021/08/31/%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E5%92%8C%E9%94%81%E4%BC%98%E5%8C%96/" class="archive-article-date">
-	  <time datetime="2021-08-31T04:01:00.000Z" itemprop="datePublished">2021-08-31</time>
-	</a>
-
-      
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/08/31/%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8%E5%92%8C%E9%94%81%E4%BC%98%E5%8C%96/">线程安全和锁优化</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      
-	<a href="/2021/08/31/%E7%A0%B4%E5%9D%8F%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B/" class="archive-article-date">
-	  <time datetime="2021-08-31T00:30:00.000Z" itemprop="datePublished">2021-08-31</time>
-	</a>
-
-      
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/08/31/%E7%A0%B4%E5%9D%8F%E5%8F%8C%E4%BA%B2%E5%A7%94%E6%B4%BE%E6%A8%A1%E5%9E%8B/">破坏双亲委派模型</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      
-	<a href="/2021/08/29/%E4%BD%8D%E5%9B%BE/" class="archive-article-date">
-	  <time datetime="2021-08-29T03:27:00.000Z" itemprop="datePublished">2021-08-29</time>
-	</a>
-
-      
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/08/29/%E4%BD%8D%E5%9B%BE/">位图</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      
-	<a href="/2021/08/28/HashMap%E5%A4%B4%E6%8F%92%E6%B3%95%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%BD%A2%E6%88%90%E7%8E%AF%EF%BC%8C%E5%AF%BC%E8%87%B4%E6%AD%BB%E5%BE%AA%E7%8E%AF/" class="archive-article-date">
-	  <time datetime="2021-08-28T02:43:00.000Z" itemprop="datePublished">2021-08-28</time>
-	</a>
-
-      
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/08/28/HashMap%E5%A4%B4%E6%8F%92%E6%B3%95%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%BD%A2%E6%88%90%E7%8E%AF%EF%BC%8C%E5%AF%BC%E8%87%B4%E6%AD%BB%E5%BE%AA%E7%8E%AF/">HashMap头插法多线程形成环，导致死循环</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      
-	<a href="/2021/08/25/Java%E9%9B%86%E5%90%88%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93%E5%9B%BE/" class="archive-article-date">
-	  <time datetime="2021-08-25T04:53:00.000Z" itemprop="datePublished">2021-08-25</time>
-	</a>
-
-      
-  
-    <h1 class="thumb" itemprop="name">
-      <a class="archive-article-title" href="/2021/08/25/Java%E9%9B%86%E5%90%88%E7%AE%80%E5%8D%95%E6%80%BB%E7%BB%93%E5%9B%BE/">Java集合简单总结图</a>
-    </h1>
-  
-
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
-  
-
-
-  <nav id="page-nav">
-    
-    <span class="page-number current">1</span><a class="page-number" href="/categories/java/page/2/">2</a><a class="extend next" rel="next" href="/categories/java/page/2/">Next &amp;raquo;</a>
-  </nav>
+    </div>
+  </aside>
 
 </section>
         
@@ -505,6 +438,10 @@
 
 
 
+  
+<script src="/js/dialog.js"></script>
+
+
 
 
 
@@ -588,6 +525,8 @@
   
   <a id="rocket" href="#top" class=""></a>
   <script type="text/javascript" src="/js/totop.js?v=1.0.0" async=""></script>
+  
+    <a id="menu-switch"><i class="fa fa-bars fa-lg"></i></a>
   
 </body>
 </html>
